@@ -376,7 +376,7 @@ EOF
   chmod 755 /etc/portage/env/compiler-clang-lto
 
   #Installation
-  message "Setting Profile to default/linux/amd64/13.0/desktop "
+  message "Setting Profile to default/linux/amd64/13.0/desktop"
   command eselect profile set default/linux/amd64/13.0/desktop
 
   message "Updating @world set"
@@ -427,7 +427,7 @@ EOF
   command cp -rv /usr/src/linux/.config-gentoo-final /usr/src/linux/.config
 
   message "Beginning Kernel Compilation Process"
-  command make $MAKE_OPTIONS
+  command make ${MAKE_OPTIONS}
   command make modules_install
   command make install
 
@@ -440,6 +440,9 @@ EOF
 
   message "Installing genkernel"
   command emerge --ask sys-kernel/genkernel
+  
+  message "Installing linux-firmware"
+  command emerge --ask sys-kernel/linux-firmware
 
   message "Generating initramfs"
   command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --install --no-ramdisk-modules initramfs
@@ -594,7 +597,7 @@ EOF
   message "Adding new user to a default list of groups"
   usermod -aG ftp,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel ${USER}
   
-  if [ -x $(command echo ${LATE_PACKAGES} | grep doas 2>/dev/null) ]; then
+  if [ -x "$(command echo ${LATE_PACKAGES} | grep doas 2>/dev/null)" ]; then
     message "Configuring /etc/doas.conf"
     cat << EOF > /etc/doas.conf
 permit persist :wheel
