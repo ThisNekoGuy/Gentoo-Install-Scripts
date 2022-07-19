@@ -5,7 +5,7 @@ An install script to automate setting up a base gentoo system. Note: An ncurses 
 Download a stage3 tarball from gentoo's website, and place it in the stage3 folder. Boot the gentoo live cd, and clone this repository in the live cd. Then create your partitions, and run the script. 
 
 # Important 
-By default the script uses the default partition table in the gentoo handbook
+By default, the script does not use the partition table in the Gentoo handbook.
 
 Filesystem<br />
 `/dev/nvme0np3 ->` Boot partition<br />
