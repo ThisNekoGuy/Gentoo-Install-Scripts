@@ -416,7 +416,7 @@ EOF
   command rc-update add net.eth0 default
 
   message "Installing tools, cronie, and mlocate for file indexing"
-  command emerge --ask $TOOLS
+  command emerge --ask ${TOOLS}
 
   message "Configuring Bootloader"
   echo GRUB_PLATFORMS="efi-64" >> /etc/portage/make.conf #For UEFI users only
@@ -424,8 +424,11 @@ EOF
   message "Installing grub2"
   command grub2-install --target=x86_64-efi --efi-directory=/boot
   command grub2-mkconfig -o /boot/grub/grub.cfg
+  
+  ## Not sure about installing an initramfs manager?
+  ## https://wiki.gentoo.org/wiki/Initramfs
 
-  message "Base installation has finished but there are still some steps that have to be done"
+  message "Base installation has finished but there are still some steps that have to be done!"
   
   message "Installing Nvidia driver"
   USE_FLAGS+=" staticlibs dist-kernel kernel-open persistenced tools"
