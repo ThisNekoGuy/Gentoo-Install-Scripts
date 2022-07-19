@@ -217,6 +217,9 @@ CFLAGS="${CFLAGS/-fno-plt/}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
 LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CROSSCFLAGS="${CFLAGS}"
+CROSSCXXFLAGS="${CXXFLAGS}"
+CROSSLDFLAGS="${LDFLAGS}"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -318,6 +321,9 @@ CFLAGS="${CFLAGS/-fno-plt/} -std=gnu89 \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
 LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CROSSCFLAGS="${CFLAGS}"
+CROSSCXXFLAGS="${CXXFLAGS}"
+CROSSLDFLAGS="${LDFLAGS}"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
