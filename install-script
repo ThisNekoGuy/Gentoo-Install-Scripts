@@ -204,6 +204,35 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
   chmod 755 chmod 755 /etc/portage/env/compiler-gcc
+  
+    message "Configuring /etc/portage/env/compiler-gcc-wine"
+  cat << EOF > /etc/portage/env/compiler-gcc-wine
+### Wine doesn't play nice with LTO; it usually doesn't compile
+CC="gcc"
+CXX="g++"
+AR="ar"
+NM="nm"
+RANLIB="ranlib"
+CFLAGS="${CFLAGS/-fno-plt/}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+  chmod 755 chmod 755 /etc/portage/env/compiler-gcc-wine
 
   message "Configuring /etc/portage/env/compiler-gcc-lto"
   cat << EOF > /etc/portage/env/compiler-gcc-lto
@@ -268,6 +297,43 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
   chmod 755 chmod 755 /etc/portage/env/compiler-clang
+  
+  message "Configuring /etc/portage/env/compiler-clang-wine"
+  cat << EOF > /etc/portage/env/compiler-clang-wine
+## Not the Wine default because Wine doesn't always play nice with Clang at runtime
+CC="clang"
+CXX="clang++"
+OBJC=clang
+LD="/usr/bin/ld.lld"
+AS="llvm-as"
+### Ignore these three for non-LTO builds:
+AR=""
+NM=""
+RANLIB=""
+### Wine doesn't play nice with LTO; it usually doesn't compile
+STRIP="llvm-strip"
+OBJCOPY="llvm-objcopy"
+_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS/-fno-plt/} \${_HARDENING_FLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+  chmod 755 chmod 755 /etc/portage/env/compiler-clang-wine
 
   message "Configuring /etc/portage/env/compiler-clang-lto"
   cat << EOF > /etc/portage/env/compiler-clang-lto
@@ -440,6 +506,10 @@ EOF
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
 sys-devel/clang compiler-clang-lto
+app-emulation/wine-vanilla compiler-gcc-wine
+app-emulation/wine-staging compiler-gcc-wine
+app-emulation/wine-gecko compiler-gcc-wine
+app-emulation/wine-mono compiler-gcc-wine
 EOF
  chmod 755 /etc/portage/package.env
 
