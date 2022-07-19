@@ -16,8 +16,6 @@ CPU_FLAGS="aes avx avx2 f16c fma3 mmx mmxext pclmul popcnt rdrand sha sse sse2 s
 USE_FLAGS="X wayland acl bindist mmx sse sse2 -suid -selinux -gnome clang kde qt5 sddm -qt4 smart networkmanager gtk display-manager -discover desktop-portal crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit pam -systemd -test -examples vulkan discord-presence mgba en-US"
 MAKE_OPTIONS="-j$(($(nproc)+1))"
 
-DEFAULT_USE_FLAGS="${USE_FLAGS}"
-
 IS_SSD=true
 
 # if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ]; then 
@@ -204,6 +202,40 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
   chmod 755 chmod 755 /etc/portage/env/compiler-gcc
+  
+  message "Configuring /etc/portage/env/compiler-gcc-nvidia"
+  cat << EOF > /etc/portage/env/compiler-gcc-nvidia
+## Don't use LTO to install Nvidia (proprietary) drivers; may or may not go well with the open-source modules?
+CC="gcc"
+CXX="g++"
+AR="ar"
+NM="nm"
+RANLIB="ranlib"
+CFLAGS="${CFLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS} staticlibs dist-kernel kernel-open persistenced tools"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+  chmod 755 chmod 755 /etc/portage/env/compiler-gcc-nvidia
+  
+  message "Configuring /etc/portage/package.env for Nvidia drivers"
+  cat << EOF > /etc/portage/package.env
+x11-drivers/nvidia-drivers compiler-gcc-nvidia
+EOF
   
     message "Configuring /etc/portage/env/compiler-gcc-wine"
   cat << EOF > /etc/portage/env/compiler-gcc-wine
@@ -506,9 +538,7 @@ EOF
   message "Base installation has finished but there are still some steps that have to be done!"
   
   message "Installing Nvidia driver"
-  USE_FLAGS+=" staticlibs dist-kernel kernel-open persistenced tools"
   command emerge --ask x11-drivers/nvidia-drivers
-  USE_FLAGS="${DEFAULT_USE_FLAGS}"
   
   message "Installing Clang compiler"
   emerge --ask --update --deep --changed-use sys-devel/clang
@@ -738,6 +768,10 @@ EOF
   chmod 755 /etc/env.d/user-configs.sh
   chmod +x /etc/env.d/user-configs.sh
   
+  message "Installing Steam"
+  command eselect repository enable steam-overlay
+  USE_FLAGS+=" steamruntime"
+  
   message "Reboot into your newly installed system!"
 }
 
@@ -768,7 +802,6 @@ export MAKE_OPTIONS
 export HOSTNAME
 export TOOLS
 export LATE_PACKAGES
-export DEFAULT_USE_FLAGS
 
 ./get-latest-stage3
 install_gentoo_prep
