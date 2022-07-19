@@ -90,7 +90,7 @@ install_gentoo_prep ()
 
   #Mount Disks
   message "Mounting Root and Boot partitions"
-  command mount -v ${ROOT_PARTITION} $MOUNT_LOCATION
+  command mount -v ${ROOT_PARTITION} ${MOUNT_LOCATION}
   command mkdir -pv ${MOUNT_LOCATION}/boot
   command mount -v ${BOOT_PARTITION} ${MOUNT_LOCATION}/boot
 
@@ -106,8 +106,8 @@ install_gentoo_prep ()
 
   #Stage3 Tarball
   message "Copying stage3 tarball to system"
-  command cp -rv $STAGE3 $MOUNT_LOCATION
-  command cd $MOUNT_LOCATION
+  command cp -rv $STAGE3 ${MOUNT_LOCATION}
+  command cd ${MOUNT_LOCATION}
 
   message "Extracting stage3 tarball"
   command tar xvjpf stage3-*.tar.bz2 --xattrs
@@ -118,7 +118,7 @@ install_gentoo_prep ()
 
 
   message "Copying kernel configuration files"
-  command cp -rv $KERNEL_CONFIG_FILE ${MOUNT_LOCATION}/kernel-config
+  command cp -rv ${KERNEL_CONFIG_FILE} ${MOUNT_LOCATION}/kernel-config
 
   ##Chroot
   message "Copying DNS info"
@@ -594,7 +594,7 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
   
-  message "Installing eselect(?)"
+  message "Installing eselect"
   command emerge --ask --changed-use --oneshot app-admin/eselect
   command emerge --ask app-eselect/eselect-repository
   
@@ -671,7 +671,7 @@ EOF
   message "Adding new user to a default list of groups"
   usermod -aG ftp,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel ${USER}
   
-  if [ -x "$(command echo ${LATE_PACKAGES} | grep doas 2>/dev/null)" ]; then
+  if [ -x "$(command echo ${LATE_PACKAGES} | grep doas 2>/dev/null)" ] || [ -x "$(command echo ${TOOLS} | grep doas 2>/dev/null)" ]; then
     message "Configuring /etc/doas.conf"
     cat << EOF > /etc/doas.conf
 permit persist :wheel
@@ -681,7 +681,7 @@ EOF
     chmod 0440 /etc/doas.conf
   fi
   
-  if [ -x "$(command echo ${LATE_PACKAGES} | grep sudo 2>/dev/null)" ]; then
+  if [ -x "$(command echo ${LATE_PACKAGES} | grep sudo 2>/dev/null)"  ] || [ -x "$(command echo ${TOOLS} | grep sudo 2>/dev/null)" ]; then
     message "Configuring /etc/sudoers"
     sed -i "s/# %wheel ALL=(ALL:ALL)/%wheel ALL=(ALL:ALL)/" /etc/sudoers
     # In case the line above uncomments the line below, which we don't want, we're going to check if it was uncommented and re-comment it if it was
@@ -730,10 +730,16 @@ EOF
 ## In honor of a Gentoo meme:
 alias emerchu="emerge"
 
+## Shortcut for detecting configured build profiles
+alias buildProfiles="ls /etc/portage/env/ | grep compiler"
+
 ## Shortcut for rebuilding the grub configuration
 alias grubRebuild="grub-mkconfig -o /boot/grub/grub.cfg"
 
-## Set SSH storage requests to Kwallet
+## Shortcut for checking if there's present CPU vulnerabilities and their status
+alias vulnerabilities="grep -r . /sys/devices/system/cpu/vulnerabilities/"
+
+## Set SSH storage requests to Kwallet if present
 if [ -f /usr/bin/ksshaskpass ]; then 
     export SSH_ASKPASS='/usr/bin/ksshaskpass'
 fi
