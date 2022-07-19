@@ -8,8 +8,8 @@ Download a stage3 tarball from Gentoo's website and place it in the stage3 folde
 By default, the script does not use the partition table in the Gentoo handbook.
 
 Filesystem<br />
-`/dev/nvme0np3 ->` Boot partition<br />
-`/dev/nvme0np3 ->` Swap partition<br />
+`/dev/nvme0np1 ->` Boot partition<br />
+`/dev/nvme0np2 ->` Swap partition<br />
 `/dev/nvme0np3 ->` Root partition<br /><br />
 -or-<br /><br />
 `/dev/sda1 ->` Boot partition<br />
