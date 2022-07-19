@@ -10,8 +10,8 @@ By default, the script does not use the partition table in the Gentoo handbook.
 Filesystem<br />
 `/dev/nvme0np3 ->` Boot partition<br />
 `/dev/nvme0np3 ->` Swap partition<br />
-`/dev/nvme0np3 ->` Root partition<br />
--or-
+`/dev/nvme0np3 ->` Root partition<br /><br />
+-or-<br /><br />
 `/dev/sda1 ->` Boot partition<br />
 `/dev/sda2 ->` Swap partition<br />
 `/dev/sda3 ->` Root partition<br />
@@ -20,3 +20,5 @@ This script will need some modifications especially the kernel config file. Thes
 
 Another thing to note is that the script by default builds for UEFI systems. This can easily be changed
 
+# Upstream URL:
+https://github.com/tashrifsanil/Gentoo-Install-Scripts
