@@ -475,6 +475,10 @@ EOF
   
   message "Installing linux-firmware"
   command emerge --ask sys-kernel/linux-firmware
+  
+  ## Would be good to have CPU detection for this when applicable; AMD microcode is bundled with sys-kernel/linux-firmware
+  # message "Installing Intel microcode"
+  # command emerge --ask sys-kernel/intel-microcode
 
   message "Generating initramfs"
   command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --install --no-ramdisk-modules initramfs
