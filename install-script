@@ -9,27 +9,53 @@ DGRAY='\033[1;30m'
 NC='\033[0m' # No Color
 
 MOUNT_LOCATION=/mnt/gentoo
-TIMEZONE=Asia/Dubai
+TIMEZONE=America/Chicago
 
-CFLAGS="-march=haswell -O2 -pipe"
-CPU_FLAGS="aes avx fma3 mmx mmxext popcnt sse sse2 sse3 sse4_1 sse4_2 ssse3"
-USE_FLAGS="X acl bindist mmx sse sse2 -suid -kde -qt4 sna dri pulseaudio alsa dbus"
-MAKE_OPTIONS="-j9"
+CFLAGS="-march=znver2 -mtune-znver2 -O3 -pipe -fno-plt"
+CPU_FLAGS="aes avx avx2 f16c fma3 mmx mmxext pclmul popcnt rdrand sha sse sse2 sse3 sse4_1 sse4_2 sse4a ssse3"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 -suid -selinux -gnome clang kde qt5 sddm -qt4 smart networkmanager gtk display-manager -discover desktop-portal crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit pam -systemd -test -examples vulkan discord-presence mgba en-US"
+MAKE_OPTIONS="-j$(($(nproc)+1))"
 
-BIOS_PARTITION=/dev/sda1
-BOOT_PARTITION=/dev/sda2
-SWAP_PARTITION=/dev/sda3
-ROOT_PARTITION=/dev/sda4
+DEFAULT_USE_FLAGS="${USE_FLAGS}"
+
+IS_SSD=true
+
+# if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ]; then 
+#   BOOT_PARTITION=/dev/nvme0n1p1
+#   SWAP_PARTITION=/dev/nvme0n1p2
+#   ROOT_PARTITION=/dev/nvme0n1p3
+# else
+#   BOOT_PARTITION=/dev/sda1
+#   SWAP_PARTITION=/dev/sda2
+#   ROOT_PARTITION=/dev/sda3
+# fi
+
+if [ IS_SSD == true ]; then
+  if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ]; then 
+    BOOT_PARTITION=/dev/nvme0n1p1
+    SWAP_PARTITION=/dev/nvme0n1p2
+    ROOT_PARTITION=/dev/nvme0n1p3
+  else
+    BOOT_PARTITION=/dev/sda1
+    SWAP_PARTITION=/dev/sda2
+    ROOT_PARTITION=/dev/sda3
+  fi
+else
+  BOOT_PARTITION=/dev/sda1
+  SWAP_PARTITION=/dev/sda2
+  ROOT_PARTITION=/dev/sda3
+fi
 
 ROOT_FS_TYPE=btrfs
 
 STAGE3=stage3/stage3*
 KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo #kernel config file is optimized for my particular system you will have to modify it for your system
 
-HOSTNAME="gentoo"
+HOSTNAME="GENTOO"
 
-PACKAGES="sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils"
+PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils sys-fs/genfstab"
 TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate"
+LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish app-editors/nano dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla games-emulation/pcsx2 games-emulation/dolphin net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic"
 
 message ()
 {
@@ -52,30 +78,35 @@ install_gentoo_prep ()
   #Disk Setup
   message "Beginning Installation Process"
   message "Formating Boot Partition"
-  command mkfs.vfat $BOOT_PARTITION
+  command mkfs.fat -F 32 ${BOOT_PARTITION}
   message "Formating Swap Partition"
-  command mkswap -f $SWAP_PARTITION
-  command swapon $SWAP_PARTITION
+  command mkswap -f ${SWAP_PARTITION}
+  command swapon ${SWAP_PARTITION}
   message "Formating Root Partition"
-  command mkfs.${ROOT_FS_TYPE} -f $ROOT_PARTITION
+  command mkfs.${ROOT_FS_TYPE} -f ${ROOT_PARTITION}
+  
+  message "Adding partition labels"
+  command e2label ${BOOT_PARTITION} "boot"
+  command e2label ${SWAP_PARTITION} "swap"
+  command btrfs filesystem label ${ROOT_PARTITION} "root-partition"
 
   #Mount Disks
   message "Mounting Root and Boot partitions"
-  command mount -v $ROOT_PARTITION $MOUNT_LOCATION
+  command mount -v ${ROOT_PARTITION} $MOUNT_LOCATION
   command mkdir -pv ${MOUNT_LOCATION}/boot
-  command mount -v $BOOT_PARTITION ${MOUNT_LOCATION}/boot
+  command mount -v ${BOOT_PARTITION} ${MOUNT_LOCATION}/boot
 
   message "Make sure that date and time is set correctly, if it isn't then it can cause problems in the future"
   command date
   message "Is the following date correct (y/n)?"
-  read DATE_CORRECT
-  if [ $DATE_CORRECT = "n" ]; then
+  read -r DATE_CORRECT
+  if [ ${DATE_CORRECT} = "n" ]; then
     message "Enter the date and time in MMDDhhmmYYYY format"
-    read CORRECTED_DATE
-    command date $CORRECTED_DATE
+    read -r CORRECTED_DATE
+    command date ${CORRECTED_DATE}
   fi
 
-  #Stage3 Tarbal
+  #Stage3 Tarball
   message "Copying stage3 tarball to system"
   command cp -rv $STAGE3 $MOUNT_LOCATION
   command cd $MOUNT_LOCATION
@@ -121,9 +152,16 @@ install_gentoo_chroot()
 
   message "Configuring /etc/portage/make.conf"
   cat << EOF > /etc/portage/make.conf
+CC="gcc"
+CXX="g++"
+AR="ar"
+NM="nm"
+RANLIB="ranlib"
 CFLAGS="${CFLAGS}"
 CXXFLAGS="\${CFLAGS}"
-CPU_FLAGS="$CPU_FLAGS"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
 # Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
@@ -131,10 +169,134 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j9"
+MAKEOPTS="-j$(($(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+
+  message "Configuring /etc/portage/env/compiler-gcc"
+  cat << EOF > /etc/portage/env/compiler-gcc
+CC="gcc"
+CXX="g++"
+AR="ar"
+NM="nm"
+RANLIB="ranlib"
+CFLAGS="${CFLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+
+  message "Configuring /etc/portage/env/compiler-gcc-lto"
+  cat << EOF > /etc/portage/env/compiler-gcc-lto
+CC="gcc"
+CXX="g++"
+AR="gcc-ar"
+NM="gcc-nm"
+RANLIB="gcc-ranlib"
+CFLAGS="${CFLAGS} -flto=thin"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+
+  message "Configuring /etc/portage/env/compiler-clang"
+  cat << EOF > /etc/portage/env/compiler-clang
+CC="clang"
+CXX="clang++"
+OBJC=clang
+LD="/usr/bin/ld.lld"
+AS="llvm-as"
+### Ignore these three for non-LTO builds:
+AR=""
+NM=""
+RANLIB=""
+###
+STRIP="llvm-strip"
+OBJCOPY="llvm-objcopy"
+_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+
+    message "Configuring /etc/portage/env/compiler-clang-lto"
+  cat << EOF > /etc/portage/env/compiler-clang-lto
+CC="clang"
+CXX="clang++"
+OBJC=clang
+LD="/usr/bin/ld.lld"
+AR="llvm-ar"
+NM="llvm-nm"
+AS="llvm-as"
+RANLIB="llvm-ranlib"
+STRIP="llvm-strip"
+OBJCOPY="llvm-objcopy"
+_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} -flto=thin \${_HARDENING_FLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
 EOF
 
   #Installation
@@ -145,7 +307,7 @@ EOF
   command emerge --ask --update --deep --newuse @world
 
   message "Installing filesystem packages"
-  command emerge --ask $PACKAGES
+  command emerge --ask ${PACKAGES}
 
   message "Configuring timezone"
   command echo "$TIMEZONE" > /etc/timezone
@@ -207,7 +369,11 @@ EOF
   message "Generating initramfs"
   command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --install --no-ramdisk-modules initramfs
 
-  cat << EOF > /etc/fstab
+  if [ IS_SSD != true ]; then
+    message "Generating fstab file"
+    command genfstab -L / >> /etc/fstab
+  else
+    cat << EOF > /etc/fstab
 # /etc/fstab: static file system information.
 #
 # noatime turns off atimes for increased performance (atimes normally aren't
@@ -220,14 +386,20 @@ EOF
 #
 # See the manpage fstab(5) for more information.
 #
+# If these values are undesirable defaults, use sys-fs/genfstab - ex: "genfstab -L (mountpoint) >> /etc/fstab"
+#
 
 # <fs>                  <mountpoint>    <type>          <opts>          <dump/pass>
 
 # NOTE: If your BOOT partition is ReiserFS, add the notail option to opts.
-${BOOT_PARTITION}               /boot           vfat            noauto,noatime  1 2
-${SWAP_PARTITION}               none            swap            sw              0 0
-${ROOT_PARTITION}               /               btrfs           noatime,ssd,compress=lzo,clear_cache            0 0
+LABEL=boot               /boot           vfat            rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro        0 2
+LABEL=swap               none            swap            defaults        0 0
+LABEL=root-partition     /               btrfs           rw,relatime,compress=zstd:3,ssd,space_cache=v2,subvolid=5,subvol=/        0 0
 EOF
+  fi
+
+  message "Making a backup of the fstab configuration"
+  command cp -v /etc/fstab /etc/fstab.bak
 
   message "Setting Hostname"
   command sed -i "s/localhost/$HOSTNAME/g" /etc/conf.d/hostname
@@ -251,6 +423,95 @@ EOF
   command grub2-mkconfig -o /boot/grub/grub.cfg
 
   message "Base installation has finished but there are still some steps that have to be done"
+  
+  message "Installing Nvidia driver"
+  USE_FLAGS+=" staticlibs dist-kernel kernel-open persistenced tools"
+  command emerge --ask x11-drivers/nvidia-drivers
+  USE_FLAGS="${DEFAULT_USE_FLAGS}"
+  
+  message "Installing Clang compiler"
+  emerge --ask --update --deep --changed-use sys-devel/clang
+  message "Configuring /etc/portage/package.env"
+  cat << EOF > /etc/portage/package.env
+sys-devel/clang compiler-clang-lto
+EOF
+
+  message "Rebuilding Clang compiler using itself"
+  emerge --ask --update --deep --changed-use sys-devel/clang
+
+  message "Backing up /etc/portage/make.conf to /etc/portage/make.conf.bak"
+  command cp -v /etc/portage/make.conf /etc/portage/make.conf.bak
+  message "Temporarily removing /etc/portage/make.conf"
+  command rm -v /etc/portage/make.conf
+  message "Temporarily adding a Clang-configured /etc/portage/make.conf"
+  cat << EOF > /etc/portage/make.conf
+CC="clang"
+CXX="clang++"
+OBJC=clang
+LD="/usr/bin/ld.lld"
+AS="llvm-as"
+### Ignore these three for non-LTO builds:
+AR=""
+NM=""
+RANLIB=""
+###
+STRIP="llvm-strip"
+OBJCOPY="llvm-objcopy"
+_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j$(($(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+  
+  message "Installing eselect(?)"
+  command emerge --ask --changed-use --oneshot app-admin/eselect
+  command eselect profile list | grep plasma
+  ## Recursive error handling would be desired here but is difficult for me to properly figure out at the moment
+  ## Not sure which of these two is the better method of implementing interactive eselect
+  
+#  command read -r -p "Enter the desired profile value via 'eselect profile set ': "
+  command read -n 1 -r -p "Enter the desired profile value: " | eselect profile set
+  
+  meessage "Installing KDE Plasma"
+  command emerge --ask kde-plasma/plasma-meta
+  
+  message "Installing shadow password manager"
+  command emerge --ask sys-apps/shadow
+  
+  message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
+  command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
+  
+  if [ ${LATE_PACKAGES} != "" ]; then
+    message "Installing post-install packages..."
+    command emerge --ask ${LATE_PACKAGES}
+  fi
+  
+  ## Not sure if this works as intended?
+  message "Enter your desired root password: "
+  passwd root
+  message "Adding default user"
+  user=$(read -r -p "Enter your username: " | useradd -m)
+  message "Enter your desired user password: "
+  passwd ${user}
+  message "Adding new user to a default list of groups"
+  usermod -aG ftp,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel ${user}
+  
+  message "Reboot into your newly installed system!"
 }
 
 #exporting necessary functions and variables
@@ -272,7 +533,6 @@ export CFLAGS
 export CPU_FLAGS
 export USE_FLAGS
 export MAKE_OPTIONS
-export BIOS_PARTITION
 export BOOT_PARTITION
 export SWAP_PARTITION
 export ROOT_PARTITION
