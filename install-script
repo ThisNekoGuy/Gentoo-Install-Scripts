@@ -505,11 +505,11 @@ EOF
   message "Enter your desired root password: "
   passwd root
   message "Adding default user"
-  user=$(read -r -p "Enter your username: " | useradd -m)
+  USER=$(read -r -p "Enter your username: " | useradd -m)
   message "Enter your desired user password: "
-  passwd ${user}
+  passwd ${USER}
   message "Adding new user to a default list of groups"
-  usermod -aG ftp,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel ${user}
+  usermod -aG ftp,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel ${USER}
   
   message "Reboot into your newly installed system!"
 }
