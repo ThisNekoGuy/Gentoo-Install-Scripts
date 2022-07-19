@@ -533,12 +533,50 @@ EOF
   # In case the line above uncomments the line below, which we don't want, we're going to check if it was uncommented and re-comment it if it was
   sed -i "s/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/" /etc/sudoers
   
+  message "Installing sys-libs/pam"
+  command emerge --ask sys-libs/pam
+
+  message "Configuring /etc/environment"
+  cat << EOF > /etc/environment
+#
+# This file is parsed by pam_env module
+#
+# Syntax: simple "KEY=VAL" pairs on separate lines
+#
+
+## Ask GTK programs to use xdg portals
+export GTK_USE_PORTAL=1
+
+## For Wine / Proton
+export WINEESYNC=1
+export WINEFSYNC=1
+export PBA_ENABLE=1
+
+## Enables DrKonqi for all program crashes
+export KDE_COREDUMP_NOTIFY=1
+
+## Kwin compositing render setting
+#    O: OpenGL backend (either OpenGL 1, OpenGL 2 or OpenGL ES 2.0)
+#    O1: OpenGL 1 backend (only 4.x)
+#    O2: OpenGL 2 backend
+#    O2ES: OpenGL ES 2 backend (since 5.5)
+#    X: XRender backend (only X11)
+#    Q: QPainter backend (only Wayland)
+#    N: No Compositing (only X11)
+
+export KWIN_COMPOSE=O2
+EOF
+  
+  message "Adding a user configuration script to /etc/profile.d/user-configs.sh"
   cat << EOF > /etc/profile.d/user-configs.sh
 #! /bin/bash
 
 
 ## In honor of a Gentoo meme:
 alias emerchu="emerge"
+
+## Shortcut for rebuilding the grub configuration
+alias grubRebuild="grub-mkconfig -o /boot/grub/grub.cfg"
 
 ## Set SSH storage requests to Kwallet
 if [ -f /usr/bin/ksshaskpass ]; then 
