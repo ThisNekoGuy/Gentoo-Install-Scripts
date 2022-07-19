@@ -723,6 +723,8 @@ export ROOT_FS_TYPE
 export MAKE_OPTIONS
 export HOSTNAME
 export TOOLS
+export LATE_PACKAGES
+export DEFAULT_USE_FLAGS
 
 ./get-latest-stage3
 install_gentoo_prep
