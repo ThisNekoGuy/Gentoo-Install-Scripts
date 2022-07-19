@@ -299,6 +299,13 @@ EOF
 
   message "Configuring /etc/portage/env/compiler-clang"
   cat << EOF > /etc/portage/env/compiler-clang
+### See:
+## https://wiki.gentoo.org/wiki/Clang
+## https://bugs.gentoo.org/408963
+## and
+## https://github.com/BilyakA/gentoo-clang 
+### for building an exclusively clang system
+
 CC="clang"
 CXX="clang++"
 OBJC=clang
@@ -336,6 +343,14 @@ EOF
   message "Configuring /etc/portage/env/compiler-clang-wine"
   cat << EOF > /etc/portage/env/compiler-clang-wine
 ## Not the Wine default because Wine doesn't always play nice with Clang at runtime
+
+### See:
+## https://wiki.gentoo.org/wiki/Clang
+## https://bugs.gentoo.org/408963
+## and
+## https://github.com/BilyakA/gentoo-clang 
+### for building an exclusively clang system
+
 CC="clang"
 CXX="clang++"
 OBJC=clang
@@ -375,6 +390,13 @@ EOF
 
   message "Configuring /etc/portage/env/compiler-clang-lto"
   cat << EOF > /etc/portage/env/compiler-clang-lto
+### See:
+## https://wiki.gentoo.org/wiki/Clang
+## https://bugs.gentoo.org/408963
+## and
+## https://github.com/BilyakA/gentoo-clang 
+### for building an exclusively clang system
+
 CC="clang"
 CXX="clang++"
 OBJC=clang
@@ -565,6 +587,13 @@ EOF
   command rm -v /etc/portage/make.conf
   message "Temporarily adding a Clang-configured /etc/portage/make.conf"
   cat << EOF > /etc/portage/make.conf
+### See:
+## https://wiki.gentoo.org/wiki/Clang
+## https://bugs.gentoo.org/408963
+## and
+## https://github.com/BilyakA/gentoo-clang 
+### for building an exclusively clang system
+
 CC="clang"
 CXX="clang++"
 OBJC=clang
@@ -654,6 +683,7 @@ EOF
   meessage "Installing KDE Plasma"
   command emerge --ask kde-plasma/plasma-meta
   
+  ## https://bugs.gentoo.org/830486 - Someone should look into this, seriously; Arch Linux uses it by default, and coming from Arch, some may be inclined to use it
   message "Installing shadow password manager"
   command emerge --ask sys-apps/shadow
   
