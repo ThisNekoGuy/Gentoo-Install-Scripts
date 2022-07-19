@@ -646,8 +646,8 @@ export KDE_COREDUMP_NOTIFY=1
 export KWIN_COMPOSE=O2
 EOF
   
-  message "Adding a user configuration script to /etc/profile.d/user-configs.sh"
-  cat << EOF > /etc/profile.d/user-configs.sh
+  message "Adding a user configuration script to /etc/env.d/user-configs.sh"
+  cat << EOF > /etc/env.d/user-configs.sh
 #! /bin/bash
 
 
@@ -691,8 +691,8 @@ fi
 #    export VK_ICD_FILENAMES='/usr/share/vulkan/icd.d/nvidia_icd.json'
 #fi
 EOF
-  chmod 755 /etc/profile.d/user-configs.sh
-  chmod +x /etc/profile.d/user-configs.sh
+  chmod 755 /etc/env.d/user-configs.sh
+  chmod +x /etc/env.d/user-configs.sh
   
   message "Reboot into your newly installed system!"
 }
