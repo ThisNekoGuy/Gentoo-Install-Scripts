@@ -53,7 +53,9 @@ HOSTNAME="GENTOO"
 
 PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils sys-fs/genfstab"
 TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages sys-apps/man-db"
-LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish app-editors/nano dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla games-emulation/pcsx2 games-emulation/dolphin net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic"
+LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish app-editors/nano dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla games-emulation/pcsx2 games-emulation/dolphin net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic net-print/cups"
+
+INSTALL_GAME_EMULATORS=true
 
 message ()
 {
@@ -287,7 +289,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS}"
+USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
 MAKEOPTS="-j$(($(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -378,7 +380,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS}"
+USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
 MAKEOPTS="-j$(($(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -567,7 +569,7 @@ EOF
   command emerge --ask x11-drivers/nvidia-drivers
   
   message "Installing Clang compiler"
-  emerge --ask --update --deep --changed-use sys-devel/clang
+  emerge --ask sys-devel/clang
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
 sys-devel/clang compiler-clang-lto
@@ -812,8 +814,61 @@ EOF
   
   message "Installing Steam"
   command eselect repository enable steam-overlay
-  emerge --sync
+  emaint sync -r steam-overlay
   emerge --ask games-util/steam-meta
+
+  message "Configuring /etc/portage/profile/packages"
+  cat << EOF > /etc/portage/profile/packages
+*sys-fs/btrfs-progs
+*sys-fs/btrfsmaintenance
+*sys-fs/e2fsprogs
+*sys-fs/dosfstools
+*sys-fs/ntfs3g
+*net-wireless/wpa_supplicant
+*net-wireless/wireless-tools
+*net-misc/dhcpcd
+*app-text/tree
+*sys-apps/pciutils
+*sys-apps/portage
+*app-admin/eselect
+*app-eselect/eselect-repository
+*sys-fs/genfstab
+*games-util/steam-meta::steam-overlay
+EOF
+
+  message "Enabling game-related overlay 'tatsh-overlay'"
+  command eselect repository enable tatsh-overlay
+  
+  message "Configuring /etc/portage/package.mask/tatsh-overlay"
+  cat << EOF > /etc/portage/package.mask/tatsh-overlay
+*/*::tatsh-overlay
+EOF
+
+  message "Configuring /etc/portage/package.unmask/tatsh-overlay"
+  cat << EOF > /etc/portage/package.unmask/tatsh-overlay
+games-arcade/clone-hero::tatsh-overlay
+games-emulation/rpcs3::tatsh-overlay
+games-emulation/xemu::tatsh-overlay
+games-emulation/yuzu::tatsh-overlay
+games-emulation/ryujinx::tatsh-overlay
+dev-util/flips::tatsh-overlay
+EOF
+
+  message "Configuring /etc/portage/package.env"
+  cat << EOF > /etc/portage/package.env
+games-emulation/rpcs3 compiler-clang
+games-emulation/xemu compiler-gcc-lto
+EOF
+
+  emaint sync -r tatsh-overlay
+
+  if [ ${INSTALL_GAME_EMULATORS} == "true" ]; then
+    message "Installing some emulators"
+    emerge --ask games-emulation/rpcs3
+    emerge --ask games-emulation/xemu
+    emerge --ask dev-util/flips
+    Message "If switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
+  fi
   
   message "Reboot into your newly installed system!"
 }
@@ -845,6 +900,7 @@ export MAKE_OPTIONS
 export HOSTNAME
 export TOOLS
 export LATE_PACKAGES
+export INSTALL_GAME_EMULATORS
 
 ./get-latest-stage3
 install_gentoo_prep
