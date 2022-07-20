@@ -1,0 +1,5 @@
+To-do list:
+-----------
+
+- Test the script on actual hardware for bug testing
+- Add error handling for the entire script; preferably in a way that handles anything inside of the chroot function with a message redirecting to the repo's issue page
