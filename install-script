@@ -569,7 +569,7 @@ EOF
   command emerge --ask x11-drivers/nvidia-drivers
   
   message "Installing Clang compiler"
-  emerge --ask sys-devel/clang
+  command emerge --ask sys-devel/clang
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
 sys-devel/clang compiler-clang-lto
@@ -699,11 +699,11 @@ EOF
   
   ## Not sure if this works as intended?
   message "Enter your desired root password: "
-  passwd root
+  command passwd root
   message "Adding default user"
-  USER=$(read -r -p "Enter your username: " | useradd -m)
+  USER=$(command read -r -p "Enter your username: " | useradd -m)
   message "Enter your desired user password: "
-  passwd ${USER}
+  command passwd ${USER}
   message "Adding new user to a default list of groups"
   usermod -aG ftp,users,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel ${USER}
   
@@ -727,9 +727,9 @@ EOF
   message "Rebuilding OpenRC with new USE flags"
   command emerge --ask --changed-use --oneshot sys-apps/openrc
 
-## Might not be necessary
-#   message "Installing sys-libs/pam"
-#   command emerge --ask sys-libs/pam
+## Might not be necessary?
+  message "Installing sys-libs/pam"
+  command emerge --ask --oneshot sys-libs/pam
 
   message "Configuring /etc/environment"
   cat << EOF > /etc/environment
@@ -824,9 +824,9 @@ EOF
   message "Enabling steam-overlay repo"
   command eselect repository enable steam-overlay
   message "Syncing steam-overlay repo"
-  emaint sync -r steam-overlay
+  command emaint sync -r steam-overlay
   message "Installing Steam"
-  emerge --ask games-util/steam-meta
+  command emerge --ask games-util/steam-meta
 
   message "Configuring /etc/portage/profile/packages"
   cat << EOF > /etc/portage/profile/packages
@@ -872,20 +872,20 @@ EOF
   cat << EOF > /etc/portage/package.env
 games-emulation/rpcs3 compiler-clang
 games-emulation/xemu compiler-gcc-lto
-media-plugins/nvidia-vaapi-driver compiler-gcc
+media-plugins/nvidia-vaapi-driver compiler-gcc-nvidia
 EOF
 
   message "Syncing tatsh-overlay repo"
-  emaint sync -r tatsh-overlay
+  command emaint sync -r tatsh-overlay
   
   message "Installing media-plugins/nvidia-vaapi-driver::tatsh-overlay"
-  emerge --ask media-plugins/nvidia-vaapi-driver
+  command emerge --ask media-plugins/nvidia-vaapi-driver
 
   if [ ${INSTALL_GAME_EMULATORS} == "true" ]; then
     message "Installing some emulators"
-    emerge --ask games-emulation/rpcs3
-    emerge --ask games-emulation/xemu
-    emerge --ask dev-util/flips
+    command emerge --ask games-emulation/rpcs3
+    command emerge --ask games-emulation/xemu
+    command emerge --ask dev-util/flips
     Message "If switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
   fi
   
