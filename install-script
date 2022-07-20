@@ -685,7 +685,7 @@ EOF
     message '-------------------------------'
     message "WARNING: THIS PROCESS WILL RECOMPILE EVERYTHING"
     message ""
-    WORLD_CLANG_TERMS=$(command read -n 1 -r -p "Do you acknowledge these directions? Write them down if necessary. (y/n): ")
+    WORLD_CLANG_TERMS=$(command read -n 1 -r -p "Do you acknowledge these directions? You won't see them again, so write them down if necessary. (y/n): ")
     if [ "${WORLD_CLANG_TERMS}" != "y" ]; then
       message "'y' not chosen."
       message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
@@ -697,6 +697,8 @@ EOF
       command eselect repository enable gentoo-clang
       message "Entering '/etc/portage/repos.conf/gentoo.conf' for configuration"
       command nano /etc/portage/repos.conf/gentoo.conf
+      message "Syncing the gentoo-clang overlay"
+      command command emaint sync -r gentoo-clang
       message "Rebuilding..."
       command emerge -eav1 --with-bdeps=y @world
     fi
