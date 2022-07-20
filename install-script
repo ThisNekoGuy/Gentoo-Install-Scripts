@@ -52,10 +52,12 @@ KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo #kernel config file is o
 HOSTNAME="GENTOO"
 
 PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils sys-fs/genfstab"
-TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages sys-apps/man-db"
-LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish app-editors/nano dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla games-emulation/pcsx2 games-emulation/dolphin net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck net-print/cups"
+TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages sys-apps/man-db app-editors/nano"
+LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla games-emulation/pcsx2 games-emulation/dolphin net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck net-print/cups"
 
 INSTALL_GAME_EMULATORS=true
+## This would only be applicable much later
+MAKE_CLANG_DEFAULT_COMPILER=false
 
 message ()
 {
@@ -602,10 +604,14 @@ EOF
 
   message "Backing up /etc/portage/make.conf to /etc/portage/make.conf.bak"
   command cp -v /etc/portage/make.conf /etc/portage/make.conf.bak
-  message "Temporarily removing /etc/portage/make.conf"
-  command rm -v /etc/portage/make.conf
-  message "Temporarily adding a Clang-configured /etc/portage/make.conf"
-  command cp -v /etc/portage/env/compiler-clang /etc/portage/make.conf
+  
+  if [ ${MAKE_CLANG_DEFAULT_COMPILER} != false ]; then
+    message "Adding a Clang-configured /etc/portage/make.conf"
+    command cp -v /etc/portage/env/compiler-clang /etc/portage/make.conf
+  else
+    message "Temporarily adding a Clang-configured /etc/portage/make.conf"
+    command cp -v /etc/portage/env/compiler-clang /etc/portage/make.conf
+  fi
   
   message "Installing eselect-repository"
   command emerge --ask app-eselect/eselect-repository
@@ -665,8 +671,36 @@ EOF
   message "Installing shadow password manager"
   command emerge --ask sys-apps/shadow
   
-  message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
-  command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
+  if [ ${MAKE_CLANG_DEFAULT_COMPILER} != false ]; then
+    message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
+    command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
+  else
+    message ""
+    message "From: https://github.com/BilyakA/gentoo-clang"
+    message '"Before you start rebuilding entire world,'
+    message 'remember to include overrided eclasses to your gentoo repository.'
+    message 'Add following to /etc/portage/repos.conf/gentoo.conf in [DEFAULT] section:"'
+    message '-------------------------------'
+    message 'eclass-overrides = gentoo-clang'
+    message '-------------------------------'
+    message "WARNING: THIS PROCESS WILL RECOMPILE EVERYTHING"
+    message ""
+    WORLD_CLANG_TERMS=$(command read -n 1 -r -p "Do you acknowledge these directions? Write them down if necessary. (y/n): ")
+    if [ "${WORLD_CLANG_TERMS}" != "y" ]; then
+      message "'y' not chosen."
+      message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
+      command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
+      ## Not sure if this return call does what's intended; shellcheck doesn't make this clear - it probably doesn't do what we want, so someone should correct this
+      return
+    else
+      message "Enabling the gentoo-clang overlay"
+      command eselect repository enable gentoo-clang
+      message "Entering '/etc/portage/repos.conf/gentoo.conf' for configuration"
+      command nano /etc/portage/repos.conf/gentoo.conf
+      message "Rebuilding..."
+      command emerge -eav1 --with-bdeps=y @world
+    fi
+  fi
   
   if [ "${LATE_PACKAGES}" != "" ]; then
     message "Installing post-install packages..."
@@ -828,6 +862,7 @@ EOF
 *app-eselect/eselect-repository
 *sys-fs/genfstab
 *games-util/steam-meta::steam-overlay
+*app-editors/nano
 EOF
   chmod 755 /etc/portage/profile/packages
 
@@ -873,7 +908,7 @@ EOF
   fi
   
   message "Reboot into your newly installed system!"
-  exit 0
+  return 0
 }
 
 #exporting necessary functions and variables
@@ -904,6 +939,7 @@ export HOSTNAME
 export TOOLS
 export LATE_PACKAGES
 export INSTALL_GAME_EMULATORS
+export MAKE_CLANG_DEFAULT_COMPILER
 
 ./get-latest-stage3
 install_gentoo_prep
