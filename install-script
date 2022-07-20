@@ -13,7 +13,7 @@ TIMEZONE=America/Chicago
 
 CFLAGS="-march=znver2 -mtune-znver2 -O3 -pipe -fno-plt"
 CPU_FLAGS="aes avx avx2 f16c fma3 mmx mmxext pclmul popcnt rdrand sha sse sse2 sse3 sse4_1 sse4_2 sse4a ssse3"
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba steamruntime en-US"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network steamruntime en-US"
 MAKE_OPTIONS="-j$(($(nproc)+1))"
 
 IS_SSD=true
