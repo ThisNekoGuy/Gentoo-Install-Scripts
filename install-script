@@ -13,7 +13,7 @@ TIMEZONE=America/Chicago
 
 CFLAGS="-march=znver2 -mtune-znver2 -O3 -pipe -fno-plt"
 CPU_FLAGS="aes avx avx2 f16c fma3 mmx mmxext pclmul popcnt rdrand sha sse sse2 sse3 sse4_1 sse4_2 sse4a ssse3"
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network steamruntime en-US"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network introspection steamruntime en-US"
 MAKE_OPTIONS="-j$(($(nproc)+1))"
 
 IS_SSD=true
@@ -53,7 +53,7 @@ HOSTNAME="GENTOO"
 
 PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils sys-fs/genfstab"
 TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages sys-apps/man-db"
-LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish app-editors/nano dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla games-emulation/pcsx2 games-emulation/dolphin net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic net-print/cups"
+LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish app-editors/nano dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla games-emulation/pcsx2 games-emulation/dolphin net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck net-print/cups"
 
 INSTALL_GAME_EMULATORS=true
 
@@ -654,6 +654,13 @@ EOF
   meessage "Installing KDE Plasma"
   command emerge --ask kde-plasma/plasma-meta
   
+  message "Configuring PolicyKit rules"
+  cat << EOF > /etc/polkit-1/rules.d/10-admin.rules
+polkit.addAdminRule(function(action, subject) {
+    return ["unix-group:wheel"];
+});
+EOF
+  
   ## https://bugs.gentoo.org/830486 - Someone should look into this, seriously; Arch Linux uses it by default, and coming from Arch, some may be inclined to use it
   message "Installing shadow password manager"
   command emerge --ask sys-apps/shadow
@@ -667,17 +674,16 @@ EOF
   fi
   
   ## Not sure if this works as intended?
-  message "Enter your desired root password: "
+  message "Enter your desired root password:"
   command passwd root
   message "Adding default user"
   USER=$(command read -r -p "Enter your username: ")
   command useradd -m "${USER}"
-  message "Enter your desired user password: "
+  message "Enter your desired user password:"
   command passwd "${USER}"
   message "Adding new user to a default list of groups"
   usermod -aG ftp,users,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel "${USER}"
   if [ -x "$(command echo "${LATE_PACKAGES}" | grep doas 2>/dev/null)" ] || [ -x "$(command echo "${TOOLS}" | grep doas 2>/dev/null)" ]; then
-  
     message "Configuring /etc/doas.conf"
     cat << EOF > /etc/doas.conf
 permit persist :wheel
