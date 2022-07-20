@@ -92,9 +92,9 @@ install_gentoo_prep ()
 
   #Mount Disks
   message "Mounting Root and Boot partitions"
-  command mount -v ${ROOT_PARTITION} ${MOUNT_LOCATION}
-  command mkdir -pv ${MOUNT_LOCATION}/boot
-  command mount -v ${BOOT_PARTITION} ${MOUNT_LOCATION}/boot
+  command mount -v ${ROOT_PARTITION} "${MOUNT_LOCATION}"
+  command mkdir -pv "${MOUNT_LOCATION}"/boot
+  command mount -v ${BOOT_PARTITION} "${MOUNT_LOCATION}"/boot
 
   message "Make sure that date and time is set correctly, if it isn't then it can cause problems in the future"
   command date
@@ -108,23 +108,23 @@ install_gentoo_prep ()
 
   #Stage3 Tarball
   message "Copying stage3 tarball to system"
-  command cp -rv $STAGE3 ${MOUNT_LOCATION}
-  command cd ${MOUNT_LOCATION}
+  command cp -rv $STAGE3 "${MOUNT_LOCATION}"
+  command cd "${MOUNT_LOCATION}"
 
   message "Extracting stage3 tarball"
   command tar xvjpf stage3-*.tar.bz2 --xattrs
 
   message "Copying configuration files"
-  command mkdir -pv ${MOUNT_LOCATION}/etc
-  command mkdir -pv ${MOUNT_LOCATION}/etc/portage
+  command mkdir -pv "${MOUNT_LOCATION}"/etc
+  command mkdir -pv "${MOUNT_LOCATION}"/etc/portage
 
 
   message "Copying kernel configuration files"
-  command cp -rv ${KERNEL_CONFIG_FILE} ${MOUNT_LOCATION}/kernel-config
+  command cp -rv ${KERNEL_CONFIG_FILE} "${MOUNT_LOCATION}"/kernel-config
 
   ##Chroot
   message "Copying DNS info"
-  command cp -L /etc/resolv.conf ${MOUNT_LOCATION}/etc/
+  command cp -L /etc/resolv.conf "${MOUNT_LOCATION}"/etc/
 
   message "Mounting Necessary Filesystems"
   command mount -t proc proc /mnt/gentoo/proc
@@ -134,7 +134,7 @@ install_gentoo_prep ()
   command mount --make-rslave /mnt/gentoo/dev
 
   message "Chrooting into System"
-  command chroot ${MOUNT_LOCATION} /bin/bash -c "install_gentoo_chroot"
+  command chroot "${MOUNT_LOCATION}" /bin/bash -c "install_gentoo_chroot"
 }
 
 install_gentoo_chroot()
@@ -169,7 +169,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -196,7 +196,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -225,7 +225,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} staticlibs dist-kernel kernel-open persistenced tools"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -262,7 +262,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -290,7 +290,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -333,7 +333,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -381,7 +381,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -422,7 +422,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j$(($(nproc)+1))"
+MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -432,14 +432,31 @@ EOF
   chmod 755 /etc/portage/env/compiler-clang-lto
 
   #Installation
-  message "Setting Profile to default/linux/amd64/13.0/desktop"
-  command eselect profile set default/linux/amd64/13.0/desktop
+  #   message "Setting Profile to default/linux/amd64/13.0/desktop"
+  #   command eselect profile set default/linux/amd64/13.0/desktop
+
+  ## Recursive error handling would be desired here but is difficult for me to properly figure out at the moment
+  ## Not sure which of these two is the better method of implementing interactive eselect
+  
+  #  command read -r -p "Enter the desired profile value via 'eselect profile set ': "
+  #  command read -n 1 -r -p "Enter the desired profile value: " | eselect profile set
+  profile_selection () {
+    message "Select a KDE Plasma Desktop profile:"
+    message "NOTE: DO NOT select 'no-multilib' if installing Wine or Steam (Steam is enabled by default in this script)"
+    message "NOTE: DO NOT select 'systemd' without modifying this script to support it"
+    command eselect profile list | grep plasma
+    PROFILE_SELECTION=$(command read -n 1 -r -p "Enter the desired profile value: ")
+    if [ "${PROFILE_SELECTION}" -lt 1 ] || [ "${PROFILE_SELECTION}" -gt 9 ]; then
+      profile_selection
+    fi
+  }
+  profile_selection
 
   message "Updating @world set"
   command emerge --ask --update --deep --newuse @world
 
   message "Installing filesystem packages"
-  command emerge --ask ${PACKAGES}
+  command emerge --ask "${PACKAGES}"
 
   message "Configuring timezone"
   command echo "$TIMEZONE" > /etc/timezone
@@ -540,7 +557,7 @@ EOF
   command cp -v /etc/fstab /etc/fstab.bak
 
   message "Setting Hostname"
-  command sed -i "s/localhost/$HOSTNAME/g" /etc/conf.d/hostname
+  command sed -i "s/localhost/${HOSTNAME}/g" /etc/conf.d/hostname
   message "Creating /etc/conf.d/net"
   command touch /etc/conf.d/net
   message "Installing netifrc"
@@ -551,7 +568,7 @@ EOF
   command rc-update add net.eth0 default
 
   message "Installing tools, cronie, and mlocate for file indexing"
-  command emerge --ask ${TOOLS}
+  command emerge --ask "${TOOLS}"
 
   message "Configuring Bootloader"
   echo GRUB_PLATFORMS="efi-64" >> /etc/portage/make.conf #For UEFI users only
@@ -569,7 +586,7 @@ EOF
   command emerge --ask x11-drivers/nvidia-drivers
   
   message "Installing Clang compiler"
-  command emerge --ask sys-devel/clang
+  command emerge sys-devel/clang
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
 sys-devel/clang compiler-clang-lto
@@ -581,56 +598,16 @@ EOF
  chmod 755 /etc/portage/package.env
 
   message "Rebuilding Clang compiler using itself"
-  emerge --ask --update --deep --changed-use sys-devel/clang
+  emerge --update --deep --changed-use sys-devel/clang
 
   message "Backing up /etc/portage/make.conf to /etc/portage/make.conf.bak"
   command cp -v /etc/portage/make.conf /etc/portage/make.conf.bak
   message "Temporarily removing /etc/portage/make.conf"
   command rm -v /etc/portage/make.conf
   message "Temporarily adding a Clang-configured /etc/portage/make.conf"
-  cat << EOF > /etc/portage/make.conf
-### See:
-## https://wiki.gentoo.org/wiki/Clang
-## https://bugs.gentoo.org/408963
-## and
-## https://github.com/BilyakA/gentoo-clang 
-### for building an exclusively clang system
-
-CC="clang"
-CXX="clang++"
-OBJC=clang
-LD="/usr/bin/ld.lld"
-AS="llvm-as"
-### Ignore these three for non-LTO builds:
-AR=""
-NM=""
-RANLIB=""
-###
-STRIP="llvm-strip"
-OBJCOPY="llvm-objcopy"
-_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
-CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
-CXXFLAGS="\${CFLAGS}"
-RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
-CPU_FLAGS="${CPU_FLAGS}"
-
-# WARNING: Changing your CHOST is not something that should be done lightly.
-# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
-CHOST="x86_64-pc-linux-gnu"
-# These are the USE flags that were used in addition to what is provided by the
-# profile used for building.
-USE="${USE_FLAGS}"
-MAKEOPTS="-j$(($(nproc)+1))"
-PORTDIR="/usr/portage"
-DISTDIR="${PORTDIR}/distfiles"
-PKGDIR="${PORTDIR}/packages"
-ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
-EOF
+  command cp -v /etc/portage/env/compiler-clang /etc/portage/make.conf
   
-  message "Installing eselect"
-  command emerge --ask --changed-use --oneshot app-admin/eselect
+  message "Installing eselect-repository"
   command emerge --ask app-eselect/eselect-repository
   
   message "Configuring /etc/eselect/repository.conf"
@@ -647,16 +624,16 @@ EOF
  
 # Location of the repository configuration file or directory. If it is
 # a directory, Portage rules for subfiles are used.
-REPOS_CONF=${SYSCONFDIR}/portage/repos.conf
+REPOS_CONF=\${SYSCONFDIR}/portage/repos.conf
 
 # File to use for newly added repositories when REPOS_CONF is
-# a directory.  You can use "${repository}" to refer to the name
+# a directory.  You can use "\${repository}" to refer to the name
 # of repository being added.
-REPOS_CONF_SUBFILE=${REPOS_CONF}/eselect-repo.conf
+REPOS_CONF_SUBFILE=\${REPOS_CONF}/eselect-repo.conf
  
 # Top directory to keep newly added repositores in. New repositories
 # will be added with subdirectories following repository names.
-REPOS_BASE=${SHAREDSTATEDIR}/db/repos
+REPOS_BASE=\${SHAREDSTATEDIR}/db/repos
  
 # Location of the remote repository list. The default is to use
 # the gentoo-mirror list that contains pregenerated metadata cache.
@@ -671,16 +648,8 @@ REMOTE_LIST_CACHEDIR=~/.cache/eselect-repo
  
 # Interval (in seconds) to check the remote repository list for changes.
 # The default is 2 hours.
-REMOTE_LIST_REFRESH=$(( 2 * 3600 ))
+REMOTE_LIST_REFRESH=\$(( 2 * 3600 ))
 EOF
-  
-  message "Select a KDE Plasma Desktop profile"
-  command eselect profile list | grep plasma
-  ## Recursive error handling would be desired here but is difficult for me to properly figure out at the moment
-  ## Not sure which of these two is the better method of implementing interactive eselect
-  
-#  command read -r -p "Enter the desired profile value via 'eselect profile set ': "
-  command read -n 1 -r -p "Enter the desired profile value: " | eselect profile set
   
   meessage "Installing KDE Plasma"
   command emerge --ask kde-plasma/plasma-meta
@@ -692,22 +661,23 @@ EOF
   message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
   command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
   
-  if [ ${LATE_PACKAGES} != "" ]; then
+  if [ "${LATE_PACKAGES}" != "" ]; then
     message "Installing post-install packages..."
-    command emerge --ask ${LATE_PACKAGES}
+    command emerge --ask "${LATE_PACKAGES}"
   fi
   
   ## Not sure if this works as intended?
   message "Enter your desired root password: "
   command passwd root
   message "Adding default user"
-  USER=$(command read -r -p "Enter your username: " | useradd -m)
+  USER=$(command read -r -p "Enter your username: ")
+  command useradd -m "${USER}"
   message "Enter your desired user password: "
-  command passwd ${USER}
+  command passwd "${USER}"
   message "Adding new user to a default list of groups"
-  usermod -aG ftp,users,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel ${USER}
+  usermod -aG ftp,users,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel "${USER}"
+  if [ -x "$(command echo "${LATE_PACKAGES}" | grep doas 2>/dev/null)" ] || [ -x "$(command echo "${TOOLS}" | grep doas 2>/dev/null)" ]; then
   
-  if [ -x "$(command echo ${LATE_PACKAGES} | grep doas 2>/dev/null)" ] || [ -x "$(command echo ${TOOLS} | grep doas 2>/dev/null)" ]; then
     message "Configuring /etc/doas.conf"
     cat << EOF > /etc/doas.conf
 permit persist :wheel
@@ -717,7 +687,7 @@ EOF
     chmod 0440 /etc/doas.conf
   fi
   
-  if [ -x "$(command echo ${LATE_PACKAGES} | grep sudo 2>/dev/null)"  ] || [ -x "$(command echo ${TOOLS} | grep sudo 2>/dev/null)" ]; then
+  if [ -x "$(command echo "${LATE_PACKAGES}" | grep sudo 2>/dev/null)"  ] || [ -x "$(command echo "${TOOLS}" | grep sudo 2>/dev/null)" ]; then
     message "Configuring /etc/sudoers"
     sed -i "s/# %wheel ALL=(ALL:ALL)/%wheel ALL=(ALL:ALL)/" /etc/sudoers
     # In case the line above uncomments the line below, which we don't want, we're going to check if it was uncommented and re-comment it if it was
@@ -825,8 +795,12 @@ EOF
   command eselect repository enable steam-overlay
   message "Syncing steam-overlay repo"
   command emaint sync -r steam-overlay
-  message "Installing Steam"
+  message "Configuring '/etc/portage/package.accept_keywords' and Installing Steam"
+  cat << EOF > /etc/portage/package.accept_keywords
+*/*::steam-overlay
+EOF
   command emerge --ask games-util/steam-meta
+  
 
   message "Configuring /etc/portage/profile/packages"
   cat << EOF > /etc/portage/profile/packages
@@ -882,14 +856,15 @@ EOF
   command emerge --ask media-plugins/nvidia-vaapi-driver
 
   if [ ${INSTALL_GAME_EMULATORS} == "true" ]; then
-    message "Installing some emulators"
-    command emerge --ask games-emulation/rpcs3
-    command emerge --ask games-emulation/xemu
-    command emerge --ask dev-util/flips
+    message "Installing some emulators and a ROM patching utility"
+    command emerge games-emulation/rpcs3
+    command emerge games-emulation/xemu
+    command emerge dev-util/flips
     Message "If switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
   fi
   
   message "Reboot into your newly installed system!"
+  exit 0
 }
 
 #exporting necessary functions and variables
