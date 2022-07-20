@@ -835,6 +835,7 @@ EOF
 *sys-fs/genfstab
 *games-util/steam-meta::steam-overlay
 EOF
+  chmod 755 /etc/portage/profile/packages
 
   message "Enabling game-related overlay 'tatsh-overlay'"
   command eselect repository enable tatsh-overlay
@@ -843,6 +844,7 @@ EOF
   cat << EOF > /etc/portage/package.mask/tatsh-overlay
 */*::tatsh-overlay
 EOF
+  chmod 755 /etc/portage/package.mask/tatsh-overlay
 
   message "Configuring /etc/portage/package.unmask/tatsh-overlay"
   cat << EOF > /etc/portage/package.unmask/tatsh-overlay
@@ -853,6 +855,7 @@ games-emulation/yuzu::tatsh-overlay
 games-emulation/ryujinx::tatsh-overlay
 dev-util/flips::tatsh-overlay
 EOF
+  chmod 755 /etc/portage/package.unmask/tatsh-overlay
 
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
