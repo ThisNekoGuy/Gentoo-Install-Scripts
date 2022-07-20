@@ -738,9 +738,11 @@ EOF
     sed -i "s/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/" /etc/sudoers
   fi
   
-  message "Rebuilding OpenRC with new USE flags"
-  command emerge --ask --changed-use --oneshot sys-apps/openrc
-
+  if [ ${MAKE_CLANG_DEFAULT_COMPILER} != false ] || [ "${WORLD_CLANG_TERMS}" != "y" ]; then
+    message "Rebuilding OpenRC with new USE flags"
+    command emerge --ask --changed-use --oneshot sys-apps/openrc
+  fi
+  
 ## Might not be necessary?
   message "Installing sys-libs/pam"
   command emerge --ask --oneshot sys-libs/pam
