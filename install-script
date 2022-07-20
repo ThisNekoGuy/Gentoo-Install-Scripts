@@ -14,7 +14,7 @@ TIMEZONE=America/Chicago
 CFLAGS="-march=znver2 -mtune-znver2 -O3 -pipe -fno-plt"
 CPU_FLAGS="aes avx avx2 f16c fma3 mmx mmxext pclmul popcnt rdrand sha sse sse2 sse3 sse4_1 sse4_2 sse4a ssse3"
 USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network introspection steamruntime en-US"
-MAKE_OPTIONS="-j$(($(nproc)+1))"
+MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
 IS_SSD=true
 
@@ -105,7 +105,7 @@ install_gentoo_prep ()
   if [ ${DATE_CORRECT} = "n" ]; then
     message "Enter the date and time in MMDDhhmmYYYY format"
     read -r CORRECTED_DATE
-    command date ${CORRECTED_DATE}
+    command date "${CORRECTED_DATE}"
   fi
 
   #Stage3 Tarball
@@ -587,11 +587,14 @@ EOF
   message "Installing Nvidia driver"
   command emerge --ask x11-drivers/nvidia-drivers
   
-  message "Installing Clang compiler"
-  command emerge sys-devel/clang
+  message "Installing Clang compiler and LLVM; this will take **a while**, go do something"
+  command emerge sys-devel/clang ## Built with GCC compiled llvm (thus not self-hosted)
+  command emerge sys-devel/llvm ## Built with GCC compiled llvm (thus not self-hosted)
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
 sys-devel/clang compiler-clang-lto
+sys-devel/llvm compiler-clang-lto
+sys-devel/gcc compiler-gcc-lto
 app-emulation/wine-vanilla compiler-gcc-wine
 app-emulation/wine-staging compiler-gcc-wine
 app-emulation/wine-gecko compiler-gcc-wine
@@ -599,8 +602,9 @@ app-emulation/wine-mono compiler-gcc-wine
 EOF
  chmod 755 /etc/portage/package.env
 
-  message "Rebuilding Clang compiler using itself"
+  message "Rebuilding Clang compiler LLVM using themselves; this will take **a while**, go do something"
   emerge --update --deep --changed-use sys-devel/clang
+  emerge --update --deep --changed-use sys-devel/llvm
 
   message "Backing up /etc/portage/make.conf to /etc/portage/make.conf.bak"
   command cp -v /etc/portage/make.conf /etc/portage/make.conf.bak
@@ -690,8 +694,6 @@ EOF
       message "'y' not chosen."
       message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
       command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
-      ## Not sure if this return call does what's intended; shellcheck doesn't make this clear - it probably doesn't do what we want, so someone should correct this
-      return
     else
       message "Enabling the gentoo-clang overlay"
       command eselect repository enable gentoo-clang
@@ -699,7 +701,7 @@ EOF
       command nano /etc/portage/repos.conf/gentoo.conf
       message "Syncing the gentoo-clang overlay"
       command command emaint sync -r gentoo-clang
-      message "Rebuilding..."
+      message "Rebuilding... this will take **a while**, go do something"
       command emerge -eav1 --with-bdeps=y @world
     fi
   fi
@@ -785,6 +787,9 @@ alias emerchu="emerge"
 ## Shortcut for detecting configured build profiles
 alias buildProfiles="ls /etc/portage/env/ | grep compiler"
 
+## Update shortcut
+alias update="emerge -uDNav @world"
+
 ## Shortcut for rebuilding the grub configuration
 alias grubRebuild="grub-mkconfig -o /boot/grub/grub.cfg"
 
@@ -865,6 +870,9 @@ EOF
 *sys-fs/genfstab
 *games-util/steam-meta::steam-overlay
 *app-editors/nano
+*sys-devel/gcc
+*sys-devel/clang
+*sys-devel/llvm
 EOF
   chmod 755 /etc/portage/profile/packages
 
@@ -936,7 +944,6 @@ export BOOT_PARTITION
 export SWAP_PARTITION
 export ROOT_PARTITION
 export ROOT_FS_TYPE
-export MAKE_OPTIONS
 export HOSTNAME
 export TOOLS
 export LATE_PACKAGES
