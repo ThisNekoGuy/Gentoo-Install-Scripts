@@ -755,11 +755,6 @@ alias grubRebuild="grub-mkconfig -o /boot/grub/grub.cfg"
 ## Shortcut for checking if there's present CPU vulnerabilities and their status
 alias vulnerabilities="grep -r . /sys/devices/system/cpu/vulnerabilities/"
 
-###
-## Example formatting: cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/example_repository/{CATEGORY}/{PN}
-alias ebuildSkel="cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/temp-overlay/temp-category/skel.ebuild; cd /var/db/repos/temp-overlay/temp-category/; ls ."
-
-
 ## Set SSH storage requests to Kwallet if present
 if [ -f /usr/bin/ksshaskpass ]; then 
     export SSH_ASKPASS='/usr/bin/ksshaskpass'
@@ -773,6 +768,14 @@ elif [ -n "\$DISPLAY" ] && [ -x "\$(command -v code 2>/dev/null)" ]; then
 elif [ -x "\$(command -v nano 2>/dev/null)" ]; then 
     export EDITOR=/usr/bin/nano;
 fi
+
+### See: 
+## https://wiki.gentoo.org/wiki/Ebuild
+## https://wiki.gentoo.org/wiki/EAPI
+## https://wiki.gentoo.org/wiki/Basic_guide_to_write_Gentoo_Ebuilds
+### for more information.
+## Example formatting: cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/example_repository/{CATEGORY}/{PN}
+alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/temp-overlay/temp-category/skel.ebuild; cd /var/db/repos/temp-overlay/temp-category/; xdg-open /var/db/repos/gentoo/skel.ebuild"
 
 ## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
 if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test "\$(command pacman -Qn | grep -w "^kwinft" | cut -d " " -f 1)" == "kwinft"; then
