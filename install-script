@@ -950,5 +950,5 @@ export LATE_PACKAGES
 export INSTALL_GAME_EMULATORS
 export MAKE_CLANG_DEFAULT_COMPILER
 
-get-latest-stage3
+./get-latest-stage3
 install_gentoo_prep
