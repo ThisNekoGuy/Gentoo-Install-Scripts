@@ -8,10 +8,6 @@ LPURPLE='\033[0;35m'
 DGRAY='\033[1;30m'
 NC='\033[0m' # No Color
 
-# Keeps track of this script's location
-DIRNAME=$(dirname "${BASH_SOURCE[0]}")
-SCRIPT_DIR=$(cd "${DIRNAME}" && pwd)
-
 MOUNT_LOCATION=/mnt/gentoo
 TIMEZONE=America/Chicago
 
@@ -113,7 +109,6 @@ install_gentoo_prep ()
   fi
 
   #Stage3 Tarball
-  get-latest-stage3
   message "Copying stage3 tarball to system"
   command cp -rv "${STAGE3}" "${MOUNT_LOCATION}"
   command cd "${MOUNT_LOCATION}"
@@ -127,9 +122,9 @@ install_gentoo_prep ()
 
 
   message "Copying kernel configuration files"
-  command cp -rv ${KERNEL_CONFIG_FILE} "${MOUNT_LOCATION}"/kernel-config
+  command cp -rv "${KERNEL_CONFIG_FILE}" "${MOUNT_LOCATION}"/kernel-config
 
-  ##Chroot
+  ## Chroot
   message "Copying DNS info"
   command cp -L /etc/resolv.conf "${MOUNT_LOCATION}"/etc/
 
@@ -908,7 +903,6 @@ EOF
   cat << EOF > /etc/portage/package.env
 games-emulation/rpcs3 compiler-clang
 games-emulation/xemu compiler-gcc-lto
-media-plugins/nvidia-vaapi-driver compiler-gcc-nvidia
 EOF
 
   message "Syncing tatsh-overlay repo"
@@ -956,5 +950,5 @@ export LATE_PACKAGES
 export INSTALL_GAME_EMULATORS
 export MAKE_CLANG_DEFAULT_COMPILER
 
-./get-latest-stage3
+get-latest-stage3
 install_gentoo_prep
