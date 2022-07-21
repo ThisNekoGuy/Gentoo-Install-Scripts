@@ -6,6 +6,7 @@ Boot the Gentoo live cd and clone this repository inside the live cd. Then, crea
 
 # Important 
 By default, the script does not use the partition table in the Gentoo handbook.
+Be sure to partition your drive first, and check the script to make sure it targets the correct drive near the top (simple to do); no need to format it, the script does this.
 
 Filesystem<br />
 `/dev/nvme0np1 ->` Boot partition<br />
@@ -16,7 +17,7 @@ Filesystem<br />
 `/dev/sda2 ->` Swap partition<br />
 `/dev/sda3 ->` Root partition<br />
  
-This script will need some modifications especially the kernel config file. These modifications depend on your system. Also this script uses openrc as its primary init system. Also the script at this point in time doesn't automatically download a stage3 tarball you will have to do that your self and place it in the stage3 folder.
+This script will need some modifications; especially for the kernel config file (you will need to supply your own). These modifications depend on your system. Also this script uses openrc as its primary init system. Also the script at this point in time doesn't automatically download a stage3 tarball you will have to do that your self and place it in the stage3 folder.
 
 Another thing to note is that the script by default builds for UEFI systems. This can easily be changed
 

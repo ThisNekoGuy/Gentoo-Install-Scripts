@@ -89,7 +89,7 @@ install_gentoo_prep ()
   
   message "Adding partition labels"
   command e2label ${BOOT_PARTITION} "boot"
-  command e2label ${SWAP_PARTITION} "swap"
+  command swaplabel ${SWAP_PARTITION} -L "swap"
   command btrfs filesystem label ${ROOT_PARTITION} "root-partition"
 
   #Mount Disks
