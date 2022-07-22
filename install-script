@@ -20,6 +20,8 @@ if [ ${AUTODETECT_CPU_ARCH} != false ]; then
   plain "Setting CPU architecture"
   CPU_ARCH="$(gcc -march=native -Q --help=target | grep -- '-march=' | cut -f3 | cut -d ' ' -f 1 -z)"
 fi
+CFLAGS="-march=${CPU_ARCH} -mtune-${CPU_ARCH} -O3 -pipe -fno-plt"
+# We want the CPU_FLAGS given by "cpuid2cpuflags" - this implementation only supports x86/x86_64 right now
 if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
   plain "Installing cpuid2cpuflags"
   emerge --oneshot --noreplace cpuid2cpuflags
@@ -27,8 +29,6 @@ if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
   CPU_FLAGS=$(cpuid2cpuflags | cut -c 1-15 --complement)
 fi
 
-CFLAGS="-march=${CPU_ARCH} -mtune-${CPU_ARCH} -O3 -pipe -fno-plt"
-CPU_FLAGS="${CPU_FLAGS}"
 USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
