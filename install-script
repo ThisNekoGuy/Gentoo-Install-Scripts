@@ -11,9 +11,25 @@ NC='\033[0m' # No Color
 MOUNT_LOCATION=/mnt/gentoo
 TIMEZONE=America/Chicago
 
-CFLAGS="-march=znver2 -mtune-znver2 -O3 -pipe -fno-plt"
-CPU_FLAGS="aes avx avx2 f16c fma3 mmx mmxext pclmul popcnt rdrand sha sse sse2 sse3 sse4_1 sse4_2 sse4a ssse3"
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US dist-kernel symlink fonts"
+AUTODETECT_CPU_ARCH=true
+AUTODETECT_CPU_FLAGS=true
+
+# "march" and "mtune" needs to be configured based on what this command responds with:
+# gcc -march=native -Q --help=target | grep -- '-march=' | cut -f3 | cut -d ' ' -f 1 -z
+if [ ${AUTODETECT_CPU_ARCH} != false ]; then
+  plain "Setting CPU architecture"
+  CPU_ARCH="$(gcc -march=native -Q --help=target | grep -- '-march=' | cut -f3 | cut -d ' ' -f 1 -z)"
+fi
+if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
+  plain "Installing cpuid2cpuflags"
+  emerge --oneshot --noreplace cpuid2cpuflags
+  plain "Setting CPU_FLAGS"
+  CPU_FLAGS=$(cpuid2cpuflags | cut -c 1-15 --complement)
+fi
+
+CFLAGS="-march=${CPU_ARCH} -mtune-${CPU_ARCH} -O3 -pipe -fno-plt"
+CPU_FLAGS="${AUTODETECT_CPU_FLAGS}"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
 IS_SSD=true
@@ -56,9 +72,18 @@ TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages
 LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck app-admin/hardinfo net-print/cups"
 
 USE_KERNEL_CONFIG=false
+INSTALL_INTEL_DRIVER=false
+INSTALL_NVIDIA_DRIVER=true
 INSTALL_GAME_EMULATORS=true
 ## This would only be applicable much later
 MAKE_CLANG_DEFAULT_COMPILER=false
+
+
+if [ ${INSTALL_INTEL_DRIVER} != false ]; then
+  USE+=" intel"
+elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+  USE+=" intel nvidia bbswitch"
+fi
 
 message ()
 {
@@ -610,8 +635,16 @@ EOF
 
   message "Base installation has finished but there are still some steps that have to be done!"
   
-  message "Installing Nvidia driver"
-  command emerge --ask x11-drivers/nvidia-drivers
+  message "Installing mesa"
+  command emerge --ask media-libs/mesa
+  
+  if [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != true ]; then
+    message "Installing Nvidia driver"
+    command emerge --ask x11-drivers/nvidia-drivers
+  elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+    message "Installing Nvidia driver with hybrid GPU support"
+    command emerge --ask x11-drivers/nvidia-drivers x11-misc/bumblebee
+  fi
   
   message "Installing Clang compiler and LLVM; this will take **a while**, go do something"
   command emerge sys-devel/clang ## Built with GCC compiled llvm (thus not self-hosted)
@@ -951,10 +984,12 @@ EOF
   message "Syncing tatsh-overlay repo"
   command emaint sync -r tatsh-overlay
   
-  message "Installing media-plugins/nvidia-vaapi-driver::tatsh-overlay"
-  command emerge --ask media-plugins/nvidia-vaapi-driver
+  if [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
+    message "Installing media-plugins/nvidia-vaapi-driver::tatsh-overlay"
+    command emerge --ask media-plugins/nvidia-vaapi-driver
+  fi
 
-  if [ ${INSTALL_GAME_EMULATORS} == "true" ]; then
+  if [ ${INSTALL_GAME_EMULATORS} == true ]; then
     message "Installing some emulators and a ROM patching utility"
     command emerge games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
     Message "If switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
@@ -977,6 +1012,10 @@ export LPURPLE
 export DGRAY
 export NC
 
+export AUTODETECT_CPU_ARCH
+export AUTODETECT_CPU_FLAGS
+export CPU_ARCH
+export CPU_FLAGS
 export PACKAGES
 export TIMEZONE
 export CFLAGS
@@ -990,9 +1029,11 @@ export ROOT_FS_TYPE
 export HOSTNAME
 export TOOLS
 export LATE_PACKAGES
+export USE_KERNEL_CONFIG
+export INSTALL_INTEL_DRIVER
+export INSTALL_NVIDIA_DRIVER
 export INSTALL_GAME_EMULATORS
 export MAKE_CLANG_DEFAULT_COMPILER
-export USE_KERNEL_CONFIG
 
 ./get-latest-stage3
 install_gentoo_prep
