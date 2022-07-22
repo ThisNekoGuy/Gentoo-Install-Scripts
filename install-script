@@ -512,6 +512,9 @@ EOF
 
   command locale-gen
   command eselect locale set en_US.utf8
+  
+  message "Selecting keymap"
+  command sed -i "/keymap=/c\\keymap=\"us\"" /etc/conf.d/keymaps
 
   message "Reloading Environment"
   command env-update && source /etc/profile && export PS1="(chroot) $PS1"
@@ -601,9 +604,7 @@ EOF
 
   message "Setting Hostname"
   command sed -i "s/localhost/${HOSTNAME}/g" /etc/conf.d/hostname
-  command cat << EOF > /etc/hostname
-${HOSTNAME}
-EOF
+  command ln -s /etc/conf.d/hostname /etc/hostname
   command cat << EOF > /etc/hosts
 127.0.0.1        localhost
 ::1              localhost
