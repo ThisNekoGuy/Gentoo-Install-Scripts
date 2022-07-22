@@ -51,7 +51,7 @@ KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo #kernel config file is o
 
 HOSTNAME="GENTOO"
 
-PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils sys-fs/genfstab"
+PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/iwd net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils sys-fs/genfstab"
 TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages sys-apps/man-db app-editors/nano"
 LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck app-admin/hardinfo net-print/cups"
 
@@ -102,7 +102,7 @@ install_gentoo_prep ()
   command date
   message "Is the following date correct (y/n)?"
   read -r DATE_CORRECT
-  if [ ${DATE_CORRECT} = "n" ]; then
+  if [ "${DATE_CORRECT}" = "n" ]; then
     message "Enter the date and time in MMDDhhmmYYYY format"
     read -r CORRECTED_DATE
     command date "${CORRECTED_DATE}"
@@ -560,14 +560,26 @@ EOF
 
   message "Setting Hostname"
   command sed -i "s/localhost/${HOSTNAME}/g" /etc/conf.d/hostname
+  command cat << EOF > /etc/hostname
+${HOSTNAME}
+EOF
+  command cat << EOF > /etc/hosts
+127.0.0.1        localhost
+::1              localhost
+127.0.1.1        ${HOSTNAME}
+EOF
   message "Creating /etc/conf.d/net"
   command touch /etc/conf.d/net
+  message "Setting traditional network interface names"
+  command ln -s /dev/null /etc/udev/rules.d/80-net-setup-link.rules
   message "Installing netifrc"
   command emerge --ask --noreplace net-misc/netifrc
   message "Setting network interfaces to activate at boot"
   command cd /etc/init.d
   command ln -s net.lo net.eth0
+  # command ln -s net.lo net.wlo0 # Not sure how to set up wireless properly yet
   command rc-update add net.eth0 default
+  # command rc-update add net.wlo0 default # Not sure how to set up wireless properly yet
 
   message "Installing tools, cronie, and mlocate for file indexing"
   command emerge --ask "${TOOLS}"
@@ -862,7 +874,7 @@ EOF
 *sys-fs/e2fsprogs
 *sys-fs/dosfstools
 *sys-fs/ntfs3g
-*net-wireless/wpa_supplicant
+*net-wireless/iwd
 *net-wireless/wireless-tools
 *net-misc/dhcpcd
 *app-text/tree
