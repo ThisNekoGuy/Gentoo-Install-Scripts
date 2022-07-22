@@ -232,7 +232,7 @@ PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
-  chmod 755 chmod 755 /etc/portage/env/compiler-gcc
+  chmod 755 /etc/portage/env/compiler-gcc
   
   message "Configuring /etc/portage/env/compiler-gcc-nvidia"
   cat << EOF > /etc/portage/env/compiler-gcc-nvidia
@@ -261,7 +261,7 @@ PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
-  chmod 755 chmod 755 /etc/portage/env/compiler-gcc-nvidia
+  chmod 755 /etc/portage/env/compiler-gcc-nvidia
   
   message "Configuring /etc/portage/package.env for Nvidia drivers"
   cat << EOF > /etc/portage/package.env
@@ -298,7 +298,7 @@ PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
-  chmod 755 chmod 755 /etc/portage/env/compiler-gcc-wine
+  chmod 755 /etc/portage/env/compiler-gcc-wine
 
   message "Configuring /etc/portage/env/compiler-gcc-lto"
   cat << EOF > /etc/portage/env/compiler-gcc-lto
@@ -369,7 +369,7 @@ PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
-  chmod 755 chmod 755 /etc/portage/env/compiler-clang
+  chmod 755 /etc/portage/env/compiler-clang
   
   message "Configuring /etc/portage/env/compiler-clang-wine"
   cat << EOF > /etc/portage/env/compiler-clang-wine
@@ -417,7 +417,7 @@ PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
 VIDEO_CARDS="nvidia"
 EOF
-  chmod 755 chmod 755 /etc/portage/env/compiler-clang-wine
+  chmod 755 /etc/portage/env/compiler-clang-wine
 
   message "Configuring /etc/portage/env/compiler-clang-lto"
   cat << EOF > /etc/portage/env/compiler-clang-lto
