@@ -8,3 +8,4 @@ To-do list:
 - Add an unattended feature for the script, for those who don't want the interactive experience
 - Split the install-script into smaller functions and sub-scripts
 - Detect The running CPU architecture and automatically set "-march", "-mtune", and CPU_FLAGS respectively
+- Figure out how to regenerate an initramfs on every kernel upgrade for sys-kernel/gentoo-sources (the Wiki references this but doesn't clearly tell how: https://wiki.gentoo.org/wiki/Project:Distribution_Kernel#Trying_it_out - it claims to be in the handbook but isn't)

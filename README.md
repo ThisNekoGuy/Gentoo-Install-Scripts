@@ -17,9 +17,11 @@ Filesystem<br />
 `/dev/sda2 ->` Swap partition<br />
 `/dev/sda3 ->` Root partition<br />
  
-This script will need some modifications; especially for the kernel config file (you will need to supply your own). These modifications depend on your system. Also this script uses openrc as its primary init system. Also the script at this point in time doesn't automatically download a stage3 tarball you will have to do that your self and place it in the stage3 folder.
+This script will need some minor modifications; especially for the kernel config file (either you will need to supply your own or use the default <em>"USE_KERNEL_CONFIG-false"</em> value). These modifications depend on your system. Also this script uses OpenRC as its primary init system.
 
-Another thing to note is that the script by default builds for UEFI systems. This can easily be changed
+At the moment, the script installs KDE Plasma and the open-source Nvidia kernel module driver by default.
+
+Another thing to note is that the script by default builds for UEFI systems. This can be changed.
 
 # Upstream URL:
 https://github.com/tashrifsanil/Gentoo-Install-Scripts
