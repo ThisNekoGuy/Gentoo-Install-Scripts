@@ -555,8 +555,10 @@ EOF
   command emerge --ask sys-kernel/linux-firmware
   
   ## Would be good to have CPU detection for this when applicable; AMD microcode is bundled with sys-kernel/linux-firmware
-  # message "Installing Intel microcode"
-  # command emerge --ask sys-kernel/intel-microcode
+  if [ ${INSTALL_INTEL_DRIVER} != false ]; then
+    message "Installing Intel microcode"
+    command emerge --ask sys-kernel/intel-microcode
+  fi
   
   message "Generating initramfs"
   if [ ${USE_KERNEL_CONFIG} != false ]; then
