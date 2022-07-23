@@ -52,7 +52,7 @@ MAKE_CLANG_DEFAULT_COMPILER=false
 ## DO NOT add desktop environments to this list (if you know bash), only personal applications. (I set an example here: keep, add, or remove as desired.)
 # Desktop Environments and similar related applications (like file managers, associated terminals, and associated utilities) can be added manually in this script further down.
 # This is to encourage adding new desktop environment profiles to the script, as I only use KDE Plasma, and I know this isn't the case for everyone
-LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch net-misc/axel dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git-lfs net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck app-admin/hardinfo net-print/cups"
+LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch net-misc/axel dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git-lfs net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic games-action/supertuxkart dev-util/shellcheck app-admin/hardinfo net-print/cups"
 ### -------------------------------------------------------------
 
 ### Make sure to make your own partitions; formatting is handled by the script
