@@ -32,7 +32,8 @@ fi
 USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
-IS_SSD=true
+IS_SSD=true # Change to false if the target device is not an SSD drive
+IS_NVME=true # Change to false if the target device is not an NVME drive
 
 # if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ]; then 
 #   BOOT_PARTITION=/dev/nvme0n1p1
@@ -44,8 +45,12 @@ IS_SSD=true
 #   ROOT_PARTITION=/dev/sda3
 # fi
 
+### Make sure to make your own partitions; formatting is handled by the script
+## This script currently checks for NVME SSDs first, if available; reference "lsblk" for available devices if you want to change which SSD you want Gentoo installed to by either
+## changing the "nvme0n1" name to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
+## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
 if [ IS_SSD == true ]; then
-  if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ]; then 
+  if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_NVME} != false ]; then 
     BOOT_PARTITION=/dev/nvme0n1p1
     SWAP_PARTITION=/dev/nvme0n1p2
     ROOT_PARTITION=/dev/nvme0n1p3
@@ -63,7 +68,7 @@ fi
 ROOT_FS_TYPE=btrfs
 
 STAGE3=stage3/stage3*
-KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo #kernel config file is optimized for my particular system you will have to modify it for your system
+KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo # kernel config file is optimized for my particular system; you will have to modify it for your system
 
 HOSTNAME="GENTOO"
 
@@ -92,10 +97,10 @@ elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false
 elif [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
   USE+=" nvidia"
   USED_VIDEO_CARDS="nvidia"
-elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then # Nouveau needs a path to be installed later in the script
+elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel nouveau bbswitch"
   USED_VIDEO_CARDS="intel nouveau"
-elif [ ${INSTALL_NOUVEAU_DRIVER} != false ]; then # Nouveau needs a path to be installed later in the script
+elif [ ${INSTALL_NOUVEAU_DRIVER} != false ]; then
   USE+=" nouveau"
   USED_VIDEO_CARDS="nouveau"
 elif [ ${USE_RADEON} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
@@ -1048,7 +1053,9 @@ export NC
 export AUTODETECT_CPU_ARCH
 export AUTODETECT_CPU_FLAGS
 export CPU_ARCH
-export CPU_FLAGS
+export 
+export IS_SSD
+export IS_NVME
 export PACKAGES
 export TIMEZONE
 export CFLAGS
@@ -1065,6 +1072,9 @@ export LATE_PACKAGES
 export USE_KERNEL_CONFIG
 export INSTALL_INTEL_DRIVER
 export INSTALL_NVIDIA_DRIVER
+export INSTALL_NOUVEAU_DRIVER
+export USE_RADEON
+export USED_VIDEO_CARDS
 export INSTALL_GAME_EMULATORS
 export MAKE_CLANG_DEFAULT_COMPILER
 
