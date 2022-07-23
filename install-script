@@ -92,16 +92,16 @@ if [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel"
   USED_VIDEO_CARDS="intel"
 elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
-  USE+=" intel nvidia bbswitch staticlibs persistenced tools driver"
+  USE+=" intel nvidia bbswitch persistenced driver"
   USED_VIDEO_CARDS="intel nvidia"
 elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != true ] ; then
-  USE+=" nvidia staticlibs persistenced tools driver"
+  USE+=" nvidia persistenced driver"
   USED_VIDEO_CARDS="nvidia"
 elif [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
-  USE+=" intel nvidia bbswitch staticlibs kernel-open persistenced tools"
+  USE+=" intel nvidia bbswitch kernel-open persistenced"
   USED_VIDEO_CARDS="nvidia"
 elif [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
-  USE+=" nvidia staticlibs kernel-open persistenced tools"
+  USE+=" nvidia kernel-open persistenced"
   USED_VIDEO_CARDS="nvidia"
 elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel nouveau bbswitch"
@@ -281,7 +281,35 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc
-  
+
+  message "Configuring /etc/portage/env/compiler-gcc-nvidia"
+  cat << EOF > /etc/portage/env/compiler-gcc-nvidia
+CC="gcc"
+CXX="g++"
+AR="ar"
+NM="nm"
+RANLIB="ranlib"
+CFLAGS="${CFLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS} static-libs tools"
+MAKEOPTS="-j\$((\$(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+  chmod 755 /etc/portage/env/compiler-gcc-nvidia
+
     message "Configuring /etc/portage/env/compiler-gcc-wine"
   cat << EOF > /etc/portage/env/compiler-gcc-wine
 ### Wine doesn't play nice with LTO; it usually doesn't compile
@@ -384,6 +412,49 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-clang
+
+  message "Configuring /etc/portage/env/compiler-clang-nvidia"
+  cat << EOF > /etc/portage/env/compiler-clang-nvidia
+### See:
+## https://wiki.gentoo.org/wiki/Clang
+## https://bugs.gentoo.org/408963
+## and
+## https://github.com/BilyakA/gentoo-clang 
+### for building an exclusively clang system
+
+CC="clang"
+CXX="clang++"
+OBJC=clang
+LD="/usr/bin/ld.lld"
+AS="llvm-as"
+### Ignore these three for non-LTO builds:
+AR=""
+NM=""
+RANLIB=""
+###
+STRIP="llvm-strip"
+OBJCOPY="llvm-objcopy"
+_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS} static-libs tools"
+MAKEOPTS="-j\$((\$(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="nvidia"
+EOF
+  chmod 755 /etc/portage/env/compiler-clang-nvidia
   
   message "Configuring /etc/portage/env/compiler-clang-wine"
   cat << EOF > /etc/portage/env/compiler-clang-wine
@@ -796,6 +867,11 @@ EOF
       message "'y' not chosen."
       message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
       command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
+      if [ ${INSTALL_NVIDIA_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
+        cat << EOF > /etc/portage/package.env
+x11-drivers/nvidia-drivers compiler-gcc-nvidia
+EOF
+      fi
     else
       message "Enabling the gentoo-clang overlay"
       command eselect repository enable gentoo-clang
@@ -803,6 +879,12 @@ EOF
       command nano /etc/portage/repos.conf/gentoo.conf
       message "Syncing the gentoo-clang overlay"
       command command emaint sync -r gentoo-clang
+      message "Configuring /etc/portage/package.env"
+      if [ ${INSTALL_NVIDIA_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
+        cat << EOF > /etc/portage/package.env
+x11-drivers/nvidia-drivers compiler-clang-nvidia
+EOF
+      fi
       message "Rebuilding... this will take **a while**, go do something"
       command emerge -eav1 --with-bdeps=y @world
     fi
