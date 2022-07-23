@@ -47,6 +47,12 @@ USED_VIDEO_CARDS="" ## Don't touch this!
 INSTALL_GAME_EMULATORS=true ## Use this if you like to play retro games :)
 ## The value below attempts to build the entire system via the Clang LLVM compiler; this would only be applicable much later, but does lengthen installation time
 MAKE_CLANG_DEFAULT_COMPILER=false
+
+
+## DO NOT add desktop environments to this list (if you know bash), only personal applications. (I set an example here: keep, add, or remove as desired.)
+# Desktop Environments and similar related applications (like file managers, associated terminals, and associated utilities) can be added manually in this script further down.
+# This is to encourage adding new desktop environment profiles to the script, as I only use KDE Plasma, and I know this isn't the case for everyone
+LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch net-misc/axel dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git-lfs net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck app-admin/hardinfo net-print/cups"
 ### -------------------------------------------------------------
 
 ### Make sure to make your own partitions; formatting is handled by the script
@@ -68,7 +74,7 @@ else
   ROOT_PARTITION=/dev/sda3
 fi
 
-## This script only supports BTRFS right now
+## This script only supports BTRFS right now; feel free to make a PR for other options in addition to BTRFS if you know bash
 ROOT_FS_TYPE=btrfs
 
 STAGE3=stage3/stage3*
@@ -79,10 +85,6 @@ HOSTNAME="GENTOO"
 PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/iwd net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils sys-fs/genfstab x11-misc/xdg-user-dirs"
 TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages sys-apps/man-db app-editors/nano app-shells/bash"
 
-## DO NOT add desktop environments to this list (if you know bash), only personal applications. (I set an example here: keep, add, or remove as desired.)
-# Desktop Environments and similar related applications (like file managers, associated terminals, and associated utilities) can be added manually in this script further down.
-# This is to encourage adding new desktop environment profiles to the script, as I only use KDE Plasma, and I know this isn't the case for everyone
-LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch net-misc/axel dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git-lfs net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck app-admin/hardinfo net-print/cups"
 
 ## Video card check
 # Note: A bash case check would look prettier here
