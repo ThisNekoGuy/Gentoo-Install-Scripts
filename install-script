@@ -137,13 +137,13 @@ INSTALL_KDE_PLASMA=$(command read -n 1 -r -p "Install KDE Plasma? (y/n): ")
 INSTALL_DOAS=$(read -n 1 -r -p "Install doas? (It's a smaller sudo replacement semi-ported from BSD-land) - (y/n): ")
 if [ "${INSTALL_DOAS}" != "n" ]; then
   message "Adding 'doas' to TOOLS"
-  TOOLS+="  app-admin/doas"
+  TOOLS+=" app-admin/doas"
 fi
 
 INSTALL_WINE=$(read -n 1 -r -p "Install Wine? (https://wiki.gentoo.org/wiki/Wine) - (y/n): ")
 if [ "${INSTALL_WINE}" != "n" ]; then
   message "Adding Wine packages to LATE_PACKAGES"
-  LATE_PACKAGES+="  app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common "
+  LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common "
 fi
 
 
