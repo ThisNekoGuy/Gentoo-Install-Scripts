@@ -35,15 +35,18 @@ MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 IS_SSD=true # Change to false if the target device is not an SSD drive
 IS_NVME=true # Change to false if the target device is not an NVME drive
 
-# if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ]; then 
-#   BOOT_PARTITION=/dev/nvme0n1p1
-#   SWAP_PARTITION=/dev/nvme0n1p2
-#   ROOT_PARTITION=/dev/nvme0n1p3
-# else
-#   BOOT_PARTITION=/dev/sda1
-#   SWAP_PARTITION=/dev/sda2
-#   ROOT_PARTITION=/dev/sda3
-# fi
+### These are the main values that need reviewed for installation
+USE_KERNEL_CONFIG=false
+INSTALL_INTEL_DRIVER=false ## Use if your Intel CPU has an iGPU (most Intel CPUs have this; you'll probably already know if it doesn't, but if you don't look up your CPU name)
+INSTALL_NVIDIA_DRIVER=true ## Use this if you want to use the Nvidia proprietary driver - the "open modules" option below doesn't require this to be enabled
+INSTALL_NVIDIA_OPEN_GPU_MODULES=false ## Use this if you have an RTX or newer card and aren't afraid to report bugs to improve driver support: https://github.com/NVIDIA/open-gpu-kernel-modules
+INSTALL_NOUVEAU_DRIVER=false ## Use this if you either have a really old Nvidia card that the official drivers don't support or intend to contribute to the Nouveau project
+USE_RADEON=false ## Use this if you either have an AMD APU (AMD CPU with an iGPU) or an AMD GPU
+USED_VIDEO_CARDS="" ## Don't touch this!
+INSTALL_GAME_EMULATORS=true ## Use this if you like to play retro games :)
+## The value below attempts to build the entire system via the Clang LLVM compiler; this would only be applicable much later, but does lengthen installation time
+MAKE_CLANG_DEFAULT_COMPILER=false
+### -------------------------------------------------------------
 
 ### Make sure to make your own partitions; formatting is handled by the script
 ## This script currently checks for NVME SSDs first, if available; reference "lsblk" for available devices if you want to change which SSD you want Gentoo installed to by either
@@ -65,6 +68,7 @@ else
   ROOT_PARTITION=/dev/sda3
 fi
 
+## This script only supports BTRFS right now
 ROOT_FS_TYPE=btrfs
 
 STAGE3=stage3/stage3*
@@ -76,26 +80,22 @@ PACKAGES="sys-fs/btrfs-progs sys-fs/btrfsmaintenance sys-fs/e2fsprogs sys-fs/dos
 TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages sys-apps/man-db app-editors/nano"
 LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish dev-util/rustup kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight net-misc/croc media-sound/pavucontrol-qt app-misc/neofetch net-misc/axel app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git dev-vcs/git-lfs app-admin/sudo app-admin/doas app-admin/keepassxc net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic dev-util/shellcheck app-admin/hardinfo net-print/cups"
 
-USE_KERNEL_CONFIG=false
-INSTALL_INTEL_DRIVER=false
-INSTALL_NVIDIA_DRIVER=true
-INSTALL_NOUVEAU_DRIVER=false
-USE_RADEON=false
-USED_VIDEO_CARDS=""
-INSTALL_GAME_EMULATORS=true
-## This would only be applicable much later
-MAKE_CLANG_DEFAULT_COMPILER=false
-
 
 ## A bash case check would look prettier here
 if [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel"
   USED_VIDEO_CARDS="intel"
 elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
-  USE+=" intel nvidia bbswitch"
+  USE+=" intel nvidia bbswitch staticlibs persistenced tools driver"
   USED_VIDEO_CARDS="intel nvidia"
-elif [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
-  USE+=" nvidia"
+elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != true ] ; then
+  USE+=" nvidia staticlibs persistenced tools driver"
+  USED_VIDEO_CARDS="nvidia"
+elif [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+  USE+=" intel nvidia bbswitch staticlibs kernel-open persistenced tools"
+  USED_VIDEO_CARDS="nvidia"
+elif [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
+  USE+=" nvidia staticlibs kernel-open persistenced tools"
   USED_VIDEO_CARDS="nvidia"
 elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel nouveau bbswitch"
@@ -260,40 +260,6 @@ VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc
   
-  message "Configuring /etc/portage/env/compiler-gcc-nvidia"
-  cat << EOF > /etc/portage/env/compiler-gcc-nvidia
-## Don't use LTO to install Nvidia (proprietary) drivers; may or may not go well with the open-source modules?
-CC="gcc"
-CXX="g++"
-AR="ar"
-NM="nm"
-RANLIB="ranlib"
-CFLAGS="${CFLAGS}"
-CXXFLAGS="\${CFLAGS}"
-RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
-CPU_FLAGS="${CPU_FLAGS}"
-
-# WARNING: Changing your CHOST is not something that should be done lightly.
-# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
-CHOST="x86_64-pc-linux-gnu"
-# These are the USE flags that were used in addition to what is provided by the
-# profile used for building.
-USE="${USE_FLAGS} staticlibs dist-kernel kernel-open persistenced tools"
-MAKEOPTS="-j\$((\$(nproc)+1))"
-PORTDIR="/usr/portage"
-DISTDIR="${PORTDIR}/distfiles"
-PKGDIR="${PORTDIR}/packages"
-ACCEPT_LICENSE="*"
-VIDEO_CARDS="${USED_VIDEO_CARDS}"
-EOF
-  chmod 755 /etc/portage/env/compiler-gcc-nvidia
-  
-  message "Configuring /etc/portage/package.env for Nvidia drivers"
-  cat << EOF > /etc/portage/package.env
-x11-drivers/nvidia-drivers compiler-gcc-nvidia
-EOF
-  
     message "Configuring /etc/portage/env/compiler-gcc-wine"
   cat << EOF > /etc/portage/env/compiler-gcc-wine
 ### Wine doesn't play nice with LTO; it usually doesn't compile
@@ -316,7 +282,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS}"
+USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -344,7 +310,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
+USE="${USE_FLAGS}"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -670,13 +636,13 @@ EOF
   ## Might not be necessary because of: https://wiki.gentoo.org/wiki//etc/portage/make.conf#VIDEO_CARDS (?)
   ## Not sure if installing them manually like this is necessary given the likes of tasks like Steam, where you obviously can't compile drivers into pre-built binaries...?
   ## Might just be my non-Gentoo thinking getting in the way
-  if [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+  if [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
     message "Installing Nvidia driver with hybrid GPU support"
     command emerge --ask x11-drivers/nvidia-drivers x11-misc/bumblebee
   elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
     message "Installing Nouveau driver with hybrid GPU support"
     command emerge --ask x11-drivers/xf86-video-nouveau x11-misc/bumblebee
-  elif [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
+  elif [ ${INSTALL_NVIDIA_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
     message "Installing Nvidia driver"
     command emerge --ask x11-drivers/nvidia-drivers
   elif [ ${INSTALL_NOUVEAU_DRIVER} != false ]; then
@@ -983,6 +949,8 @@ EOF
 *sys-fs/genfstab
 *sys-kernel/linux-firmware
 *sys-kernel/intel-microcode
+*sys-apps/openrc
+*sys-libs/pam
 *app-admin/mcelog
 *games-util/steam-meta::steam-overlay
 *app-editors/nano
@@ -1050,28 +1018,28 @@ export LPURPLE
 export DGRAY
 export NC
 
+export TIMEZONE
 export AUTODETECT_CPU_ARCH
 export AUTODETECT_CPU_FLAGS
 export CPU_ARCH
-export 
-export IS_SSD
-export IS_NVME
-export PACKAGES
-export TIMEZONE
-export CFLAGS
 export CPU_FLAGS
 export USE_FLAGS
-export MAKE_OPTIONS
+export IS_SSD
+export IS_NVME
 export BOOT_PARTITION
 export SWAP_PARTITION
 export ROOT_PARTITION
 export ROOT_FS_TYPE
 export HOSTNAME
+export CFLAGS
+export PACKAGES
+export MAKE_OPTIONS
 export TOOLS
 export LATE_PACKAGES
 export USE_KERNEL_CONFIG
 export INSTALL_INTEL_DRIVER
 export INSTALL_NVIDIA_DRIVER
+export INSTALL_NVIDIA_OPEN_GPU_MODULES
 export INSTALL_NOUVEAU_DRIVER
 export USE_RADEON
 export USED_VIDEO_CARDS
