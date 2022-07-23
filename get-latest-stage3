@@ -8,6 +8,7 @@ DESTINATION="${SCRIPT_DIR}/stage3"
 
 function stage3Download() {
 	printf "\n"
+	mkdir -p "${SCRIPT_DIR}/stage3"
 	echo -e "\e[33m\xe2\x8f\xb3 Downloading the stage 3 tarball... \e[m"	
 	LATEST=$(wget --quiet https://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64-openrc.txt -O-| tail -n 1 | cut -d " " -f 1)
 	BASENAME=$(basename "${LATEST}")
