@@ -938,6 +938,7 @@ EOF
       message "'y' not chosen."
       message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
       command cp -v /etc/portage/make.conf.bak /etc/portage/make.conf
+      message "Configuring /etc/portage/package.env"
       if [ ${INSTALL_NVIDIA_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
         cat << EOF > /etc/portage/package.env
 x11-drivers/nvidia-drivers compiler-gcc-nvidia
