@@ -51,7 +51,7 @@ MAKE_CLANG_DEFAULT_COMPILER=false
 
 ### Make sure to make your own partitions; formatting is handled by the script
 ## This script currently checks for NVME SSDs first, if available; reference "lsblk" for available devices if you want to change which SSD you want Gentoo installed to by either
-## changing the "nvme0n1" name to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
+## changing all of the "nvme0n1" references to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
 ## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
 
 if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
