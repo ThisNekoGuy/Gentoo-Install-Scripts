@@ -17,7 +17,7 @@ Filesystem<br />
 `/dev/sda2 ->` Swap partition<br />
 `/dev/sda3 ->` Root partition<br />
  
-This script will need some minor modifications; especially for the kernel config file (either you will need to supply your own or use the default <em>"USE_KERNEL_CONFIG-false"</em> value). These modifications depend on your system. Also this script uses OpenRC as its primary init system.
+This script will need some minor modifications; especially for the kernel config file (either you will need to supply your own or use the default <em>"USE_KERNEL_CONFIG=false"</em> value). These modifications depend on your system. Also, this script uses OpenRC as its primary init system.
 
 At the moment, the script installs KDE Plasma and the proprietary Nvidia driver by default (the GPU driver can be changed).
 
