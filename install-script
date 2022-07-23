@@ -53,16 +53,15 @@ MAKE_CLANG_DEFAULT_COMPILER=false
 ## This script currently checks for NVME SSDs first, if available; reference "lsblk" for available devices if you want to change which SSD you want Gentoo installed to by either
 ## changing the "nvme0n1" name to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
 ## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
-if [ IS_SSD == true ]; then
-  if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_NVME} != false ]; then 
-    BOOT_PARTITION=/dev/nvme0n1p1
-    SWAP_PARTITION=/dev/nvme0n1p2
-    ROOT_PARTITION=/dev/nvme0n1p3
-  else
-    BOOT_PARTITION=/dev/sda1
-    SWAP_PARTITION=/dev/sda2
-    ROOT_PARTITION=/dev/sda3
-  fi
+
+if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
+  BOOT_PARTITION=/dev/nvme0n1p1
+  SWAP_PARTITION=/dev/nvme0n1p2
+  ROOT_PARTITION=/dev/nvme0n1p3
+elif [ ${IS_SSD} != false ]; then
+  BOOT_PARTITION=/dev/sda1
+  SWAP_PARTITION=/dev/sda2
+  ROOT_PARTITION=/dev/sda3
 else
   BOOT_PARTITION=/dev/sda1
   SWAP_PARTITION=/dev/sda2
@@ -563,7 +562,7 @@ EOF
     command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --install --no-ramdisk-modules initramfs
   fi
 
-  if [ ${IS_SSD} != true ]; then
+  if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
     message "Generating fstab file"
     command genfstab -L / >> /etc/fstab
   else
