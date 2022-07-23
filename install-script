@@ -143,7 +143,7 @@ fi
 INSTALL_WINE=$(read -n 1 -r -p "Install Wine? (https://wiki.gentoo.org/wiki/Wine) - (y/n): ")
 if [ "${INSTALL_WINE}" != "n" ]; then
   message "Adding Wine packages to LATE_PACKAGES"
-  LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common "
+  LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common"
 fi
 
 
