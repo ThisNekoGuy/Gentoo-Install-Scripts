@@ -74,15 +74,36 @@ LATE_PACKAGES="x11-misc/xdg-user-dirs app-shells/bash app-shells/fish dev-util/r
 USE_KERNEL_CONFIG=false
 INSTALL_INTEL_DRIVER=false
 INSTALL_NVIDIA_DRIVER=true
+INSTALL_NOUVEAU_DRIVER=false
+USE_RADEON=false
+USED_VIDEO_CARDS=""
 INSTALL_GAME_EMULATORS=true
 ## This would only be applicable much later
 MAKE_CLANG_DEFAULT_COMPILER=false
 
 
+## A bash case check would look prettier here
 if [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel"
+  USED_VIDEO_CARDS="intel"
 elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel nvidia bbswitch"
+  USED_VIDEO_CARDS="intel nvidia"
+elif [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
+  USE+=" nvidia"
+  USED_VIDEO_CARDS="nvidia"
+elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then # Nouveau needs a path to be installed later in the script
+  USE+=" intel nouveau bbswitch"
+  USED_VIDEO_CARDS="intel nouveau"
+elif [ ${INSTALL_NOUVEAU_DRIVER} != false ]; then # Nouveau needs a path to be installed later in the script
+  USE+=" nouveau"
+  USED_VIDEO_CARDS="nouveau"
+elif [ ${USE_RADEON} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+  USE+=" intel radeon"
+  USED_VIDEO_CARDS="intel radeon"
+elif [ ${USE_RADEON} != false ]; then
+  USE+=" radeon"
+  USED_VIDEO_CARDS="radeon"
 fi
 
 message ()
@@ -203,7 +224,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
 
   message "Configuring /etc/portage/env/compiler-gcc"
@@ -230,7 +251,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc
   
@@ -259,7 +280,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc-nvidia
   
@@ -296,7 +317,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc-wine
 
@@ -324,7 +345,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc-lto
 
@@ -367,7 +388,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-clang
   
@@ -415,7 +436,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-clang-wine
 
@@ -456,7 +477,7 @@ PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
-VIDEO_CARDS="nvidia"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-clang-lto
 
@@ -641,12 +662,21 @@ EOF
   message "Installing mesa"
   command emerge --ask media-libs/mesa
   
-  if [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != true ]; then
-    message "Installing Nvidia driver"
-    command emerge --ask x11-drivers/nvidia-drivers
-  elif [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+  ## Might not be necessary because of: https://wiki.gentoo.org/wiki//etc/portage/make.conf#VIDEO_CARDS (?)
+  ## Not sure if installing them manually like this is necessary given the likes of tasks like Steam, where you obviously can't compile drivers into pre-built binaries...?
+  ## Might just be my non-Gentoo thinking getting in the way
+  if [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
     message "Installing Nvidia driver with hybrid GPU support"
     command emerge --ask x11-drivers/nvidia-drivers x11-misc/bumblebee
+  elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+    message "Installing Nouveau driver with hybrid GPU support"
+    command emerge --ask x11-drivers/xf86-video-nouveau x11-misc/bumblebee
+  elif [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
+    message "Installing Nvidia driver"
+    command emerge --ask x11-drivers/nvidia-drivers
+  elif [ ${INSTALL_NOUVEAU_DRIVER} != false ]; then
+    message "Installing Nouveau driver"
+    command emerge --ask x11-drivers/xf86-video-nouveau
   fi
   
   message "Installing Clang compiler and LLVM; this will take **a while**, go do something"
