@@ -9,7 +9,7 @@ DGRAY='\033[1;30m'
 NC='\033[0m' # No Color
 
 MOUNT_LOCATION=/mnt/gentoo
-TIMEZONE=America/Chicago
+TIMEZONE=America/Chicago # Change this to your relevant timezone located in "/usr/share/zoneinfo"
 
 AUTODETECT_CPU_ARCH=true
 AUTODETECT_CPU_FLAGS=true
