@@ -17,15 +17,15 @@ AUTODETECT_CPU_FLAGS=true
 # "march" and "mtune" needs to be configured based on what this command responds with:
 # gcc -march=native -Q --help=target | grep -- '-march=' | cut -f3 | cut -d ' ' -f 1 -z
 if [ ${AUTODETECT_CPU_ARCH} != false ]; then
-  plain "Setting CPU architecture"
+  echo "Setting CPU architecture"
   CPU_ARCH="$(gcc -march=native -Q --help=target | grep -- '-march=' | cut -f3 | cut -d ' ' -f 1 -z)"
 fi
 CFLAGS="-march=${CPU_ARCH} -mtune-${CPU_ARCH} -O3 -pipe -fno-plt"
 # We want the CPU_FLAGS given by "cpuid2cpuflags" - this implementation only supports x86/x86_64 right now
 if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
-  plain "Installing cpuid2cpuflags"
+  echo "Installing cpuid2cpuflags"
   emerge --oneshot --noreplace cpuid2cpuflags
-  plain "Setting CPU_FLAGS"
+  echo "Setting CPU_FLAGS"
   CPU_FLAGS=$(cpuid2cpuflags | cut -c 1-15 --complement)
 fi
 
