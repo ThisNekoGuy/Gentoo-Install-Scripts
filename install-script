@@ -30,7 +30,7 @@ if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
 fi
 
 ## Not entirely sure how enabling "32", "x32", "abi_x86_32" works; my lack of understanding about that may either cause Wine build errors or needlessly installed 32-bit libraries
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
 IS_SSD=true # Change to false if the target device is not an SSD drive
@@ -292,7 +292,7 @@ RANLIB="ranlib"
 CFLAGS="${CFLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -321,7 +321,7 @@ RANLIB="ranlib"
 CFLAGS="${CFLAGS/-fno-plt/}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CROSSCFLAGS="${CFLAGS}"
 CROSSCXXFLAGS="${CXXFLAGS}"
 CROSSLDFLAGS="${LDFLAGS}"
@@ -369,6 +369,34 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc-lto
+  
+  message "Configuring /etc/portage/env/compiler-gcc-lto-static"
+  cat << EOF > /etc/portage/env/compiler-gcc-lto-static
+CC="gcc"
+CXX="g++"
+AR="gcc-ar"
+NM="gcc-nm"
+RANLIB="gcc-ranlib"
+CFLAGS="${CFLAGS} -flto=thin"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j\$((\$(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
+EOF
+  chmod 755 /etc/portage/env/compiler-gcc-lto-static
 
   message "Configuring /etc/portage/env/compiler-clang"
   cat << EOF > /etc/portage/env/compiler-clang
@@ -438,7 +466,7 @@ _HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
 CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -483,7 +511,7 @@ _HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
 CFLAGS="${CFLAGS/-fno-plt/} -std=gnu89 \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CROSSCFLAGS="${CFLAGS}"
 CROSSCXXFLAGS="${CXXFLAGS}"
 CROSSLDFLAGS="${LDFLAGS}"
@@ -544,6 +572,48 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-clang-lto
+  
+    message "Configuring /etc/portage/env/compiler-clang-lto-static"
+  cat << EOF > /etc/portage/env/compiler-clang-lto-static
+### See:
+## https://wiki.gentoo.org/wiki/Clang
+## https://bugs.gentoo.org/408963
+## and
+## https://github.com/BilyakA/gentoo-clang 
+### for building an exclusively clang system
+## This file exists to prevent system-critical packages from breaking due to dependency issues
+
+CC="clang"
+CXX="clang++"
+OBJC=clang
+LD="/usr/bin/ld.lld"
+AR="llvm-ar"
+NM="llvm-nm"
+AS="llvm-as"
+RANLIB="llvm-ranlib"
+STRIP="llvm-strip"
+OBJCOPY="llvm-objcopy"
+_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} -flto=thin \${_HARDENING_FLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j\$((\$(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
+EOF
+  chmod 755 /etc/portage/env/compiler-clang-lto-static
 
   #Installation
   #   message "Setting Profile to default/linux/amd64/13.0/desktop"
@@ -751,9 +821,10 @@ EOF
   command emerge sys-devel/llvm ## Built with GCC compiled llvm (thus not self-hosted)
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
-sys-devel/clang compiler-clang-lto
-sys-devel/llvm compiler-clang-lto
-sys-devel/gcc compiler-gcc-lto
+sys-devel/clang compiler-clang-lto-static
+sys-devel/llvm compiler-clang-lto-static
+sys-devel/lld compiler-clang-lto-static
+sys-devel/gcc compiler-gcc-lto-static
 app-emulation/wine-vanilla compiler-gcc-wine
 app-emulation/wine-staging compiler-gcc-wine
 app-emulation/wine-gecko compiler-gcc-wine
@@ -834,7 +905,7 @@ EOF
     command rc-update add sddm default
   fi
   
-  message "Installing Kuroo"
+  message "Install Kuroo (emerge/portage GUI)? - This is optional."
   command emerge --ask app-portage/kuroo
   
   message "Configuring PolicyKit rules"
@@ -872,6 +943,29 @@ EOF
 x11-drivers/nvidia-drivers compiler-gcc-nvidia
 EOF
       fi
+      cat << EOF > /etc/portage/package.env
+sys-fs/btrfs-progs compiler-gcc-lto-static
+sys-fs/btrfsmaintenance compiler-gcc-lto-static
+sys-fs/e2fsprogs compiler-gcc-lto-static
+sys-fs/dosfstools compiler-gcc-lto-static
+sys-fs/ntfs3g compiler-gcc-lto-static
+net-wireless/iwd compiler-gcc-lto-static
+net-wireless/wireless-tools compiler-gcc-lto-static
+net-misc/dhcpcd compiler-gcc-lto-static
+app-text/tree compiler-gcc-lto-static
+sys-apps/pciutils compiler-gcc-lto-static
+dev-vcs/git compiler-gcc-lto-static
+sys-apps/portage compiler-gcc-lto-static
+app-admin/eselect compiler-gcc-lto-static
+sys-kernel/linux-firmware compiler-gcc-lto-static
+sys-kernel/intel-microcode compiler-gcc-lto-static
+sys-apps/openrc compiler-gcc-lto-static
+sys-libs/pam compiler-gcc-lto-static
+app-admin/mcelog compiler-gcc-lto-static
+app-editors/nano compiler-gcc-lto-static
+sys-libs/glibc compiler-gcc-lto-static
+media-libs/vulkan-loader compiler-gcc-lto-static
+EOF
     else
       message "Enabling the gentoo-clang overlay"
       command eselect repository enable gentoo-clang
@@ -885,6 +979,29 @@ EOF
 x11-drivers/nvidia-drivers compiler-clang-nvidia
 EOF
       fi
+      cat << EOF > /etc/portage/package.env
+sys-fs/btrfs-progs compiler-clang-lto-static
+sys-fs/btrfsmaintenance compiler-clang-lto-static
+sys-fs/e2fsprogs compiler-clang-lto-static
+sys-fs/dosfstools compiler-clang-lto-static
+sys-fs/ntfs3g compiler-clang-lto-static
+net-wireless/iwd compiler-clang-lto-static
+net-wireless/wireless-tools compiler-clang-lto-static
+net-misc/dhcpcd compiler-clang-lto-static
+app-text/tree compiler-clang-lto-static
+sys-apps/pciutils compiler-clang-lto-static
+dev-vcs/git compiler-clang-lto-static
+sys-apps/portage compiler-clang-lto-static
+app-admin/eselect compiler-clang-lto-static
+sys-kernel/linux-firmware compiler-clang-lto-static
+sys-kernel/intel-microcode compiler-clang-lto-static
+sys-apps/openrc compiler-clang-lto-static
+sys-libs/pam compiler-clang-lto-static
+app-admin/mcelog compiler-clang-lto-static
+app-editors/nano compiler-clang-lto-static
+sys-libs/glibc compiler-clang-lto-static
+media-libs/vulkan-loader compiler-clang-lto-static
+EOF
       message "Rebuilding... this will take **a while**, go do something"
       command emerge -eav1 --with-bdeps=y @world
     fi
@@ -1073,6 +1190,7 @@ EOF
 *sys-devel/gcc
 *sys-devel/clang
 *sys-devel/llvm
+*sys-devel/lld
 *sys-libs/glibc
 EOF
   chmod 755 /etc/portage/profile/packages
