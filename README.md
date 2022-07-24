@@ -1,6 +1,12 @@
 # Gentoo-Install-Scripts
 An install script to automate setting up a base gentoo system. Note: An ncurses based UI, or a toolkit based GUI <em>may</em> be coming. Depends on contributions.
 
+# GitLab Page
+https://gitlab.com/N3k0-san/Gentoo-Install-Scripts
+
+# GitHub Mirror
+https://github.com/ThisNekoGuy/Gentoo-Install-Scripts
+
 # Usage
 Boot the Gentoo live cd and clone this repository inside the live cd. Then, create your partitions and run the script.
 
@@ -23,5 +29,6 @@ At the moment, the script installs KDE Plasma and the proprietary Nvidia driver 
 
 Another thing to note is that the script by default builds for UEFI systems. This can be changed.
 
-# Upstream URL:
+# Original Upstream URL:
 https://github.com/tashrifsanil/Gentoo-Install-Scripts
+
