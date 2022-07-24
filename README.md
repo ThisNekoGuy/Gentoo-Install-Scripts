@@ -4,7 +4,7 @@ An install script to automate setting up a base gentoo system. Note: An ncurses 
 # GitLab Page
 https://gitlab.com/N3k0-san/Gentoo-Install-Scripts
 
-# GitHub Mirror
+# GitHub Mirror - Don't Make PRs Here
 https://github.com/ThisNekoGuy/Gentoo-Install-Scripts
 
 # Usage
