@@ -30,7 +30,7 @@ if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
 fi
 
 ## Not entirely sure how enabling "32", "x32", "abi_x86_32" works; my lack of understanding about that may either cause Wine build errors or needlessly installed 32-bit libraries
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome xattr clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable elogind -suid -selinux xattr clang desktop-portal accessibility crypt bluetooth browser-integration pipewire sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
 IS_SSD=true # Change to false if the target device is not an SSD drive
@@ -135,6 +135,9 @@ command ()
 
 
 INSTALL_KDE_PLASMA=$(command read -n 1 -r -p "Install KDE Plasma? (y/n): ")
+if [ ${INSTALL_KDE_PLASMA} != "n" ]; then
+  USE_FLAGS+=" colord crash-handler display-manager firewall gtk kde legacy-systray networkmanager qt5 sddm semantic-desktop smart telemetry -discover -gnome -kwallet -qt4 -wallpapers"
+fi
 
 INSTALL_DOAS=$(read -n 1 -r -p "Install doas? (It's a smaller sudo replacement semi-ported from BSD-land) - (y/n): ")
 if [ "${INSTALL_DOAS}" != "n" ]; then
@@ -231,7 +234,7 @@ install_gentoo_prep ()
   
   if [ ${IS_SSD} != true ] || [ ${IS_NVME} != true ] && [ ${IS_NVME} != true ]; then
     message "Installing genfstab"
-    command ${EMERGE} sys-fs/genfstab
+    command emerge --oneshot --noreplace sys-fs/genfstab
     message "Generating fstab file"
     command genfstab -L / >> "${MOUNT_LOCATION}/etc/fstab"
   fi
