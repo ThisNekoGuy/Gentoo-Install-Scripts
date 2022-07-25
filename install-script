@@ -232,7 +232,7 @@ install_gentoo_prep ()
   command mount --rbind /dev /mnt/gentoo/dev
   command mount --make-rslave /mnt/gentoo/dev
   
-  if [ ${IS_SSD} != true ] || [ ${IS_NVME} != true ] && [ ${IS_NVME} != true ]; then
+  if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
     message "Installing genfstab"
     command emerge --oneshot --noreplace sys-fs/genfstab
     message "Generating fstab file"
@@ -757,7 +757,7 @@ EOF
     command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --install --no-ramdisk-modules initramfs
   fi
 
-  if [ ${IS_SSD} != false ] || [ ${IS_NVME} != false ] && [ ${IS_NVME} != false ]; then
+  if [ ${IS_SSD} != false ] || [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ]; then
     cat << EOF > /etc/fstab
 # /etc/fstab: static file system information.
 #
