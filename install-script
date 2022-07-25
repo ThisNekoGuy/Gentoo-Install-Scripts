@@ -30,7 +30,7 @@ if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
 fi
 
 ## Not entirely sure how enabling "32", "x32", "abi_x86_32" works; my lack of understanding about that may either cause Wine build errors or needlessly installed 32-bit libraries
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable -suid -selinux -gnome xattr clang kde qt5 sddm semantic-desktop telemetry -qt4 smart networkmanager gtk display-manager -discover desktop-portal colord firewall elogind accessibility crypt crash-handler bluetooth browser-integration -kwallet legacy-systray sddm -wallpapers winbind sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
 IS_SSD=true # Change to false if the target device is not an SSD drive
@@ -52,7 +52,7 @@ MAKE_CLANG_DEFAULT_COMPILER=false
 ## DO NOT add desktop environments to this list (if you know bash), only personal applications. (I set an example here: keep, add, or remove as desired.)
 # Desktop Environments and similar related applications (like file managers, associated terminals, and associated utilities) can be added manually in this script further down.
 # This is to encourage adding new desktop environment profiles to the script, as I only use KDE Plasma, and I know this isn't the case for everyone
-LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch net-misc/axel dev-lang/mono virtual/dotnet-sdk games-util/lutris sys-apps/flatpak dev-vcs/git-lfs net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic games-action/supertuxkart dev-util/shellcheck app-admin/hardinfo net-print/cups"
+LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch net-misc/axel dev-lang/mono virtual/dotnet-sdk games-util/lutris dev-vcs/git-lfs net-ftp/filezilla net-im/discord-bin media-gfx/blender media-video/obs-studio app-office/libreoffice games-fps/xonotic games-action/supertuxkart dev-util/shellcheck app-admin/hardinfo net-print/cups"
 ### -------------------------------------------------------------
 
 ### Make sure to make your own partitions; formatting is handled by the script
@@ -148,6 +148,23 @@ if [ "${INSTALL_WINE}" != "n" ]; then
   LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common"
 fi
 
+INSTALL_STEAM=$(read -n 1 -r -p "Install Steam? (https://wiki.gentoo.org/wiki/Steam) - (y/n): ")
+if [ "${INSTALL_STEAM}" != "n" ]; then
+  message "Enabling Steam for installation later"
+fi
+
+INSTALL_FLATPAK=$(read -n 1 -r -p "Install flatpak? (https://wiki.gentoo.org/wiki/Flatpak) - (y/n): ")
+if [ "${INSTALL_FLATPAK}" != "n" ]; then
+  message "Adding flatpak packages to LATE_PACKAGES"
+  LATE_PACKAGES+=" sys-apps/flatpak"
+fi
+
+EMERGE_UNATTENDED=$(read -n 1 -r -p "Run the install script (mostly) unattended? - (y/n): ")
+if [ "${EMERGE_UNATTENDED}" != "n" ]; then
+  EMERGE="emerge"
+else
+  EMERGE="emerge --ask"
+fi
 
 install_gentoo_prep ()
 {
@@ -169,8 +186,8 @@ install_gentoo_prep ()
   #Mount Disks
   message "Mounting Root and Boot partitions"
   command mount -v ${ROOT_PARTITION} "${MOUNT_LOCATION}"
-  command mkdir -pv "${MOUNT_LOCATION}"/boot
-  command mount -v ${BOOT_PARTITION} "${MOUNT_LOCATION}"/boot
+  command mkdir -pv "${MOUNT_LOCATION}/boot"
+  command mount -v ${BOOT_PARTITION} "${MOUNT_LOCATION}/boot"
 
   message "Make sure that date and time is set correctly, if it isn't then it can cause problems in the future"
   command date
@@ -191,12 +208,12 @@ install_gentoo_prep ()
   command tar xvjpf stage3-*.tar.bz2 --xattrs
 
   message "Copying configuration files"
-  command mkdir -pv "${MOUNT_LOCATION}"/etc
-  command mkdir -pv "${MOUNT_LOCATION}"/etc/portage
+  command mkdir -pv "${MOUNT_LOCATION}/etc"
+  command mkdir -pv "${MOUNT_LOCATION}/etc/portage"
 
   if [ ${USE_KERNEL_CONFIG} != false ]; then
     message "Copying kernel configuration files"
-    command cp -rv "${KERNEL_CONFIG_FILE}" "${MOUNT_LOCATION}"/kernel-config
+    command cp -rv "${KERNEL_CONFIG_FILE}" "${MOUNT_LOCATION}/kernel-config"
   fi
 
   ## Chroot
@@ -209,6 +226,13 @@ install_gentoo_prep ()
   command mount --make-rslave /mnt/gentoo/sys
   command mount --rbind /dev /mnt/gentoo/dev
   command mount --make-rslave /mnt/gentoo/dev
+  
+  if [ ${IS_SSD} != true ] || [ ${IS_NVME} != true ] && [ ${IS_NVME} != true ]; then
+    message "Installing genfstab"
+    command ${EMERGE} sys-fs/genfstab
+    message "Generating fstab file"
+    command genfstab -L / >> "${MOUNT_LOCATION}/etc/fstab"
+  fi
 
   message "Chrooting into System"
   command chroot "${MOUNT_LOCATION}" /bin/bash -c "install_gentoo_chroot"
@@ -370,8 +394,8 @@ VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc-lto
   
-  message "Configuring /etc/portage/env/compiler-gcc-lto-static"
-  cat << EOF > /etc/portage/env/compiler-gcc-lto-static
+  message "Configuring /etc/portage/env/compiler-gcc-static-lto"
+  cat << EOF > /etc/portage/env/compiler-gcc-static-lto
 CC="gcc"
 CXX="g++"
 AR="gcc-ar"
@@ -396,7 +420,7 @@ PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
-  chmod 755 /etc/portage/env/compiler-gcc-lto-static
+  chmod 755 /etc/portage/env/compiler-gcc-static-lto
 
   message "Configuring /etc/portage/env/compiler-clang"
   cat << EOF > /etc/portage/env/compiler-clang
@@ -573,8 +597,8 @@ VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-clang-lto
   
-    message "Configuring /etc/portage/env/compiler-clang-lto-static"
-  cat << EOF > /etc/portage/env/compiler-clang-lto-static
+    message "Configuring /etc/portage/env/compiler-clang-static-lto"
+  cat << EOF > /etc/portage/env/compiler-clang-static-lto
 ### See:
 ## https://wiki.gentoo.org/wiki/Clang
 ## https://bugs.gentoo.org/408963
@@ -613,7 +637,7 @@ PKGDIR="${PORTDIR}/packages"
 ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
-  chmod 755 /etc/portage/env/compiler-clang-lto-static
+  chmod 755 /etc/portage/env/compiler-clang-static-lto
 
   #Installation
   #   message "Setting Profile to default/linux/amd64/13.0/desktop"
@@ -640,10 +664,10 @@ EOF
   fi
 
   message "Updating @world set"
-  command emerge --ask --update --deep --newuse @world
+  command ${EMERGE} --update --deep --newuse @world
 
   message "Installing filesystem packages"
-  command emerge --ask "${PACKAGES}"
+  command ${EMERGE} "${PACKAGES}"
 
   message "Configuring timezone"
   command echo "$TIMEZONE" > /etc/timezone
@@ -679,11 +703,11 @@ EOF
 
   if [ ${USE_KERNEL_CONFIG} != false ]; then
     message "Downloading Kernel Sources and mcelog"
-    command emerge --ask sys-kernel/gentoo-sources app-admin/mcelog
+    command ${EMERGE} sys-kernel/gentoo-sources app-admin/mcelog
   else
     message "Downloading Gentoo Kernel Source and mcelog"
-    command emerge --ask sys-kernel/installkernel-gentoo
-    command emerge --ask sys-kernel/gentoo-kernel-bin app-admin/mcelog
+    command ${EMERGE} sys-kernel/installkernel-gentoo
+    command ${EMERGE} sys-kernel/gentoo-kernel-bin app-admin/mcelog
   fi  
 
   message "Cleaning Kernel source folder"
@@ -710,15 +734,15 @@ EOF
   command cp /boot/vmlinuz-* /boot/efi/boot/bootx64.efi
 
   message "Installing genkernel"
-  command emerge --ask sys-kernel/genkernel
+  command ${EMERGE} sys-kernel/genkernel
   
   message "Installing linux-firmware"
-  command emerge --ask sys-kernel/linux-firmware
+  command ${EMERGE} sys-kernel/linux-firmware
   
   ## Would be good to have CPU detection for this when applicable; AMD microcode is bundled with sys-kernel/linux-firmware
   if [ ${INSTALL_INTEL_DRIVER} != false ]; then
     message "Installing Intel microcode"
-    command emerge --ask sys-kernel/intel-microcode
+    command ${EMERGE} sys-kernel/intel-microcode
   fi
   
   message "Generating initramfs"
@@ -728,10 +752,7 @@ EOF
     command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --install --no-ramdisk-modules initramfs
   fi
 
-  if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
-    message "Generating fstab file"
-    command genfstab -L / >> /etc/fstab
-  else
+  if [ ${IS_SSD} != false ] || [ ${IS_NVME} != false ] && [ ${IS_NVME} != false ]; then
     cat << EOF > /etc/fstab
 # /etc/fstab: static file system information.
 #
@@ -773,7 +794,7 @@ EOF
   message "Setting traditional network interface names"
   command ln -s /dev/null /etc/udev/rules.d/80-net-setup-link.rules
   message "Installing netifrc"
-  command emerge --ask --noreplace net-misc/netifrc
+  command ${EMERGE} --noreplace net-misc/netifrc
   message "Setting network interfaces to activate at boot"
   command cd /etc/init.d
   command ln -s net.lo net.eth0
@@ -782,11 +803,11 @@ EOF
   # command rc-update add net.wlo0 default # Not sure how to set up wireless properly yet
 
   message "Installing tools, cronie, and mlocate for file indexing"
-  command emerge --ask "${TOOLS}"
+  command ${EMERGE} "${TOOLS}"
 
   message "Configuring Bootloader"
   echo GRUB_PLATFORMS="efi-64" >> /etc/portage/make.conf #For UEFI users only
-  command emerge --ask sys-boot/grub:2
+  command ${EMERGE} sys-boot/grub:2
   message "Installing grub2"
   command grub2-install --target=x86_64-efi --efi-directory=/boot
   command grub2-mkconfig -o /boot/grub/grub.cfg
@@ -797,23 +818,23 @@ EOF
   message "Base installation has finished but there are still some steps that have to be done!"
   
   message "Installing mesa"
-  command emerge --ask media-libs/mesa
+  command ${EMERGE} media-libs/mesa
   
   ## Might not be necessary because of: https://wiki.gentoo.org/wiki//etc/portage/make.conf#VIDEO_CARDS (?)
   ## Not sure if installing them manually like this is necessary given the likes of tasks like Steam, where you obviously can't compile drivers into pre-built binaries...?
   ## Might just be my non-Gentoo thinking getting in the way
   if [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
     message "Installing Nvidia driver with hybrid GPU support"
-    command emerge --ask x11-drivers/nvidia-drivers x11-misc/bumblebee
+    command ${EMERGE} x11-drivers/nvidia-drivers x11-misc/bumblebee
   elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
     message "Installing Nouveau driver with hybrid GPU support"
-    command emerge --ask x11-drivers/xf86-video-nouveau x11-misc/bumblebee
+    command ${EMERGE} x11-drivers/xf86-video-nouveau x11-misc/bumblebee
   elif [ ${INSTALL_NVIDIA_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
     message "Installing Nvidia driver"
-    command emerge --ask x11-drivers/nvidia-drivers
+    command ${EMERGE} x11-drivers/nvidia-drivers
   elif [ ${INSTALL_NOUVEAU_DRIVER} != false ]; then
     message "Installing Nouveau driver"
-    command emerge --ask x11-drivers/xf86-video-nouveau
+    command ${EMERGE} x11-drivers/xf86-video-nouveau
   fi
   
   message "Installing Clang compiler and LLVM; this will take **a while**, go do something"
@@ -821,11 +842,11 @@ EOF
   command emerge sys-devel/llvm ## Built with GCC compiled llvm (thus not self-hosted)
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
-sys-devel/clang compiler-clang-lto-static
-sys-devel/llvm compiler-clang-lto-static
-sys-devel/lld compiler-clang-lto-static
-sys-libs/libcxx compiler-clang-lto-static
-sys-devel/gcc compiler-gcc-lto-static
+sys-devel/clang compiler-clang-static-lto
+sys-devel/llvm compiler-clang-static-lto
+sys-devel/lld compiler-clang-static-lto
+sys-libs/libcxx compiler-clang-static-lto
+sys-devel/gcc compiler-gcc-static-lto
 app-emulation/wine-vanilla compiler-gcc-wine
 app-emulation/wine-staging compiler-gcc-wine
 app-emulation/wine-gecko compiler-gcc-wine
@@ -849,7 +870,7 @@ EOF
   command cp -v /etc/portage/env/compiler-clang /etc/portage/make.conf
   
   message "Installing eselect-repository"
-  command emerge --ask app-eselect/eselect-repository
+  command ${EMERGE} app-eselect/eselect-repository
   
   message "Configuring /etc/eselect/repository.conf"
   command mkdir -pv /etc/portage/repos.conf
@@ -897,28 +918,31 @@ EOF
   
   if [ "${INSTALL_KDE_PLASMA}" != "n" ]; then
     meessage "Installing KDE Plasma"
-    command emerge --ask kde-plasma/plasma-meta
+    command ${EMERGE} kde-plasma/plasma-meta
   
     meessage "Installing some critical desktop utilities"
-    command emerge --ask kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight media-sound/pavucontrol-qt app-admin/keepassxc
+    command ${EMERGE} kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight media-sound/pavucontrol-qt app-admin/keepassxc
   
     message "Enabling SDDM" # Might work? I don't know, never used OpenRC before
     command rc-update add sddm default
-  fi
-  
-  message "Install Kuroo (emerge/portage GUI)? - This is optional."
-  command emerge --ask app-portage/kuroo
-  
-  message "Configuring PolicyKit rules"
-  cat << EOF > /etc/polkit-1/rules.d/10-admin.rules
+    
+    message "Configuring PolicyKit rules"
+    cat << EOF > /etc/polkit-1/rules.d/10-admin.rules
 polkit.addAdminRule(function(action, subject) {
     return ["unix-group:wheel"];
 });
 EOF
+  fi
+  
+  
+  INSTALL_KUROO=$(read -n 1 -r -p "Install Kuroo (emerge/portage GUI)? - This is optional - (y/n): ")
+  if [ "${INSTALL_KUROO}" != "n" ]; then
+    command ${EMERGE} app-portage/kuroo
+  fi
   
   ## https://bugs.gentoo.org/830486 - Someone should look into this, seriously; Arch Linux uses it by default, and coming from Arch, some may be inclined to use it
   message "Installing shadow password manager"
-  command emerge --ask sys-apps/shadow
+  command ${EMERGE} sys-apps/shadow
   
   if [ ${MAKE_CLANG_DEFAULT_COMPILER} != false ]; then
     message "Restoring old /etc/portage/make.conf from /etc/portage/make.conf.bak"
@@ -946,28 +970,30 @@ x11-drivers/nvidia-drivers compiler-gcc-nvidia
 EOF
       fi
       cat << EOF > /etc/portage/package.env
-sys-fs/btrfs-progs compiler-gcc-lto-static
-sys-fs/btrfsmaintenance compiler-gcc-lto-static
-sys-fs/e2fsprogs compiler-gcc-lto-static
-sys-fs/dosfstools compiler-gcc-lto-static
-sys-fs/ntfs3g compiler-gcc-lto-static
-net-wireless/iwd compiler-gcc-lto-static
-net-wireless/wireless-tools compiler-gcc-lto-static
-net-misc/dhcpcd compiler-gcc-lto-static
-app-text/tree compiler-gcc-lto-static
-sys-apps/pciutils compiler-gcc-lto-static
-dev-vcs/git compiler-gcc-lto-static
-sys-apps/portage compiler-gcc-lto-static
-app-admin/eselect compiler-gcc-lto-static
-sys-kernel/linux-firmware compiler-gcc-lto-static
-sys-kernel/intel-microcode compiler-gcc-lto-static
-sys-apps/openrc compiler-gcc-lto-static
-sys-libs/pam compiler-gcc-lto-static
-app-admin/mcelog compiler-gcc-lto-static
-app-editors/nano compiler-gcc-lto-static
-sys-libs/glibc compiler-gcc-lto-static
-sys-libs/musl compiler-gcc-lto-static
-media-libs/vulkan-loader compiler-gcc-lto-static
+sys-fs/btrfs-progs compiler-gcc-static-lto
+sys-fs/btrfsmaintenance compiler-gcc-static-lto
+sys-fs/e2fsprogs compiler-gcc-static-lto
+sys-fs/dosfstools compiler-gcc-static-lto
+sys-fs/ntfs3g compiler-gcc-static-lto
+net-wireless/iwd compiler-gcc-static-lto
+net-wireless/wireless-tools compiler-gcc-static-lto
+net-misc/dhcpcd compiler-gcc-static-lto
+app-text/tree compiler-gcc-static-lto
+sys-apps/pciutils compiler-gcc-static-lto
+dev-vcs/git compiler-gcc-static-lto
+sys-apps/portage compiler-gcc-static-lto
+app-admin/eselect compiler-gcc-static-lto
+sys-kernel/linux-firmware compiler-gcc-static-lto
+sys-kernel/intel-microcode compiler-gcc-static-lto
+sys-apps/openrc compiler-gcc-static-lto
+sys-libs/pam compiler-gcc-static-lto
+app-admin/mcelog compiler-gcc-static-lto
+app-editors/nano compiler-gcc-static-lto
+dev-libs/glib compiler-gcc-static-lto
+sys-libs/glibc compiler-gcc-static-lto
+sys-libs/musl compiler-gcc-static-lto
+media-libs/vulkan-loader compiler-gcc-static-lto
+sys-apps/flatpak compiler-gcc-static-lto
 EOF
     else
       message "Enabling the gentoo-clang overlay"
@@ -983,28 +1009,30 @@ x11-drivers/nvidia-drivers compiler-clang-nvidia
 EOF
       fi
       cat << EOF > /etc/portage/package.env
-sys-fs/btrfs-progs compiler-clang-lto-static
-sys-fs/btrfsmaintenance compiler-clang-lto-static
-sys-fs/e2fsprogs compiler-clang-lto-static
-sys-fs/dosfstools compiler-clang-lto-static
-sys-fs/ntfs3g compiler-clang-lto-static
-net-wireless/iwd compiler-clang-lto-static
-net-wireless/wireless-tools compiler-clang-lto-static
-net-misc/dhcpcd compiler-clang-lto-static
-app-text/tree compiler-clang-lto-static
-sys-apps/pciutils compiler-clang-lto-static
-dev-vcs/git compiler-clang-lto-static
-sys-apps/portage compiler-clang-lto-static
-app-admin/eselect compiler-clang-lto-static
-sys-kernel/linux-firmware compiler-clang-lto-static
-sys-kernel/intel-microcode compiler-clang-lto-static
-sys-apps/openrc compiler-clang-lto-static
-sys-libs/pam compiler-clang-lto-static
-app-admin/mcelog compiler-clang-lto-static
-app-editors/nano compiler-clang-lto-static
-sys-libs/glibc compiler-clang-lto-static
-sys-libs/musl compiler-clang-lto-static
-media-libs/vulkan-loader compiler-clang-lto-static
+sys-fs/btrfs-progs compiler-clang-static-lto
+sys-fs/btrfsmaintenance compiler-clang-static-lto
+sys-fs/e2fsprogs compiler-clang-static-lto
+sys-fs/dosfstools compiler-clang-static-lto
+sys-fs/ntfs3g compiler-clang-static-lto
+net-wireless/iwd compiler-clang-static-lto
+net-wireless/wireless-tools compiler-clang-static-lto
+net-misc/dhcpcd compiler-clang-static-lto
+app-text/tree compiler-clang-static-lto
+sys-apps/pciutils compiler-clang-static-lto
+dev-vcs/git compiler-clang-static-lto
+sys-apps/portage compiler-clang-static-lto
+app-admin/eselect compiler-clang-static-lto
+sys-kernel/linux-firmware compiler-clang-static-lto
+sys-kernel/intel-microcode compiler-clang-static-lto
+sys-apps/openrc compiler-clang-static-lto
+sys-libs/pam compiler-clang-static-lto
+app-admin/mcelog compiler-clang-static-lto
+app-editors/nano compiler-clang-static-lto
+dev-libs/glib compiler-clang-static-lto
+sys-libs/glibc compiler-clang-static-lto
+sys-libs/musl compiler-clang-static-lto
+media-libs/vulkan-loader compiler-clang-static-lto
+sys-apps/flatpak compiler-clang-static-lto
 EOF
       message "Rebuilding... this will take **a while**, go do something"
       command emerge -eav1 --with-bdeps=y @world
@@ -1013,24 +1041,44 @@ EOF
   
   if [ "${LATE_PACKAGES}" != "" ]; then
     message "Installing post-install packages..."
-    command emerge --ask "${LATE_PACKAGES}"
+    command ${EMERGE} "${LATE_PACKAGES}"
   fi
   
   ## Not sure if this works as intended?
   message "Enter your desired root password:"
   command passwd root
-  message "Adding default user"
-  USER=$(command read -r -p "Enter your username: ")
-  command useradd -m "${USER}"
-  message "Enter your desired user password:"
-  command passwd "${USER}"
-  message "Adding new user to a default list of groups"
-  usermod -aG ftp,users,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel "${USER}"
+  
+  CREATE_USER=$(read -n 1 -r -p "Create a user account? - (y/n): ")
+  if [ "${CREATE_USER}" != "n" ]; then
+    message "Adding default user"
+    USER=$(command read -r -p "Enter your username: ")
+    command useradd -m "${USER}"
+    message "Enter your desired user password:"
+    command passwd "${USER}"
+    message "Adding new user to a default list of groups"
+    usermod -aG ftp,users,games,video,kvm,input,audio,rfkill,optical,storage,scanner,wheel "${USER}"
+    message "Adding some useful resources to the home folder"
+    cat << EOF > "/home/${USER}/Linux-tkg Kernel.desktop"
+[Desktop Entry]
+Icon=text-html
+Name=linux-tkg Kernel - Link
+Type=Link
+URL[\$e]=https://github.com/frogging-family/linux-tkg
+EOF
+    cat << EOF > "/home/${USER}/Wine-tkg-git.desktop"
+[Desktop Entry]
+Icon=text-html
+Name=Wine-tkg-git - Link
+Type=Link
+URL[\$e]=https://github.com/frogging-family/wine-tkg-git
+EOF
+  fi
+  
   if [ -x "$(command echo "${LATE_PACKAGES}" | grep doas 2>/dev/null)" ] || [ -x "$(command echo "${TOOLS}" | grep doas 2>/dev/null)" ]; then
     message "Configuring /etc/doas.conf"
     cat << EOF > /etc/doas.conf
 permit persist :wheel
-permit setenv { -ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
+permit setenv { -ENV PS1=\$DOAS_PS1 SSH_AUTH_SOCK } :wheel
 permit nopass keepenv setenv { PATH } root as ro
 EOF
     chmod 0440 /etc/doas.conf
@@ -1038,7 +1086,6 @@ EOF
     cat << EOF > /etc/portage/profile/packages
 *app-admin/doas
 EOF
-  fi
   
   if [ -x "$(command echo "${LATE_PACKAGES}" | grep sudo 2>/dev/null)"  ] || [ -x "$(command echo "${TOOLS}" | grep sudo 2>/dev/null)" ] || [ -x "$(command ls /usr/bin | grep sudo 1>/dev/null)" ]; then
     message "Configuring /etc/sudoers"
@@ -1053,12 +1100,12 @@ EOF
   
   if [ ${MAKE_CLANG_DEFAULT_COMPILER} != true ] || [ "${WORLD_CLANG_TERMS}" != "y" ]; then
     message "Rebuilding OpenRC with new USE flags"
-    command emerge --ask --changed-use --oneshot sys-apps/openrc
+    command ${EMERGE} --changed-use --oneshot sys-apps/openrc
   fi
   
 ## Might not be necessary?
   message "Installing sys-libs/pam"
-  command emerge --ask --oneshot sys-libs/pam
+  command ${EMERGE} --oneshot sys-libs/pam
 
   message "Configuring /etc/environment"
   cat << EOF > /etc/environment
@@ -1156,16 +1203,22 @@ EOF
   chmod 755 /etc/env.d/user-configs.sh
   chmod +x /etc/env.d/user-configs.sh
   
-  message "Enabling steam-overlay repo"
-  command eselect repository enable steam-overlay
-  message "Syncing steam-overlay repo"
-  command emaint sync -r steam-overlay
-  message "Configuring '/etc/portage/package.accept_keywords' and Installing Steam"
-  cat << EOF > /etc/portage/package.accept_keywords
+  if [ ${INSTALL_STEAM} != "n" ]; then
+    message "Enabling steam-overlay repo"
+    command eselect repository enable steam-overlay
+    message "Syncing steam-overlay repo"
+    command emaint sync -r steam-overlay
+    message "Configuring '/etc/portage/package.accept_keywords' and Installing Steam"
+    cat << EOF > /etc/portage/package.accept_keywords
 */*::steam-overlay
 EOF
-  command emerge --ask games-util/steam-meta
-  
+    command ${EMERGE} games-util/steam-meta
+  else
+    message "Configuring /etc/portage/package.mask/steam-overlay"
+  cat << EOF > /etc/portage/package.mask/steam-overlay
+*/*::steam-overlay
+EOF
+  fi
 
   message "Configuring /etc/portage/profile/packages"
   cat << EOF > /etc/portage/profile/packages
@@ -1195,6 +1248,7 @@ EOF
 *sys-devel/clang
 *sys-devel/llvm
 *sys-devel/lld
+*dev-libs/glib
 *sys-libs/glibc
 *sys-libs/musl
 *sys-libs/libcxx
@@ -1232,12 +1286,12 @@ EOF
   
   if [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
     message "Installing media-plugins/nvidia-vaapi-driver::tatsh-overlay"
-    command emerge --ask media-plugins/nvidia-vaapi-driver
+    command ${EMERGE} media-plugins/nvidia-vaapi-driver
   fi
 
   if [ ${INSTALL_GAME_EMULATORS} == true ]; then
     message "Installing some emulators and a ROM patching utility"
-    command emerge games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
+    command emerge --keep-going games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
     Message "If switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
   fi
   
@@ -1283,6 +1337,11 @@ export INSTALL_NVIDIA_OPEN_GPU_MODULES
 export INSTALL_NOUVEAU_DRIVER
 export USE_RADEON
 export USED_VIDEO_CARDS
+export INSTALL_WINE
+export INSTALL_STEAM
+export INSTALL_FLATPAK
+export EMERGE_UNATTENDED
+export EMERGE
 export INSTALL_GAME_EMULATORS
 export MAKE_CLANG_DEFAULT_COMPILER
 
