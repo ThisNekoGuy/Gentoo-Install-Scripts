@@ -3,9 +3,6 @@ To-do list:
 
 - Test the script on actual hardware for bug testing
 - Add a system timer that waits 24 hours before permitting "emerge --sync" to run again; to avoid being banned by Gentoo.org on suspicion of DDoS-ing
-- Add support for using a generic kernel to avoid needing a .config-gentoo file
 - Add error handling for the entire script; preferably in a way that handles anything inside of the chroot function with a message of where the error was and a redirect to the repo's issue page
-- Add an unattended feature for the script, for those who don't want the interactive experience
 - Split the install-script into smaller functions and sub-scripts
-- Detect The running CPU architecture and automatically set "-march", "-mtune", and CPU_FLAGS respectively
 - Figure out how to regenerate an initramfs on every kernel upgrade for sys-kernel/gentoo-sources (the Wiki references this but doesn't clearly tell how: https://wiki.gentoo.org/wiki/Project:Distribution_Kernel#Trying_it_out - it claims to be in the handbook but isn't)
