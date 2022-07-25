@@ -6,4 +6,4 @@ To-do list:
 - Add error handling for the entire script; preferably in a way that handles anything inside of the chroot function with a message of where the error was and a redirect to the repo's issue page
 - Split the install-script into smaller functions and sub-scripts
 - Figure out how to regenerate an initramfs on every kernel upgrade for sys-kernel/gentoo-sources (the Wiki references this but doesn't clearly tell how: https://wiki.gentoo.org/wiki/Project:Distribution_Kernel#Trying_it_out - it claims to be in the handbook but isn't)
-- Set a template "USE"-like variable for all build profiles, and replace ${USE_FLAGS} references with the template variable; this can later have a user script that allows to more easily change USE values without deleting important values for unique build profiles by blanket-setting USE recklessly
+- Set a template "USE"-like variable for all build profiles, and replace ${USE_FLAGS} references with the template variable; this can later have a user script that allows to more easily change the template USE values without deleting important values for unique build profiles by blanket-setting USE, itself, recklessly
