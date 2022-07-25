@@ -431,7 +431,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS}"
+USE="${USE_FLAGS} libcxxabi libunwind"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -474,7 +474,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS} static-libs tools"
+USE="${USE_FLAGS} static-libs tools libcxxabi libunwind"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -522,7 +522,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
+USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw libcxxabi libunwind"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -563,7 +563,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS}"
+USE="${USE_FLAGS} libcxxabi libunwind"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -605,7 +605,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS}"
+USE="${USE_FLAGS} libcxxabi libunwind"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -824,6 +824,7 @@ EOF
 sys-devel/clang compiler-clang-lto-static
 sys-devel/llvm compiler-clang-lto-static
 sys-devel/lld compiler-clang-lto-static
+sys-libs/libcxx compiler-clang-lto-static
 sys-devel/gcc compiler-gcc-lto-static
 app-emulation/wine-vanilla compiler-gcc-wine
 app-emulation/wine-staging compiler-gcc-wine
@@ -965,6 +966,7 @@ sys-libs/pam compiler-gcc-lto-static
 app-admin/mcelog compiler-gcc-lto-static
 app-editors/nano compiler-gcc-lto-static
 sys-libs/glibc compiler-gcc-lto-static
+sys-libs/musl compiler-gcc-lto-static
 media-libs/vulkan-loader compiler-gcc-lto-static
 EOF
     else
@@ -1001,6 +1003,7 @@ sys-libs/pam compiler-clang-lto-static
 app-admin/mcelog compiler-clang-lto-static
 app-editors/nano compiler-clang-lto-static
 sys-libs/glibc compiler-clang-lto-static
+sys-libs/musl compiler-clang-lto-static
 media-libs/vulkan-loader compiler-clang-lto-static
 EOF
       message "Rebuilding... this will take **a while**, go do something"
@@ -1193,6 +1196,8 @@ EOF
 *sys-devel/llvm
 *sys-devel/lld
 *sys-libs/glibc
+*sys-libs/musl
+*sys-libs/libcxx
 EOF
   chmod 755 /etc/portage/profile/packages
 
