@@ -161,8 +161,10 @@ fi
 
 EMERGE_UNATTENDED=$(read -n 1 -r -p "Run the install script (mostly) unattended? - (y/n): ")
 if [ "${EMERGE_UNATTENDED}" != "n" ]; then
+  message "Selected unattended"
   EMERGE="emerge"
 else
+  message "Selected interactive"
   EMERGE="emerge --ask"
 fi
 
