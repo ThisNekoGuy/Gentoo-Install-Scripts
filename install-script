@@ -162,6 +162,12 @@ if [ "${INSTALL_FLATPAK}" != "n" ]; then
   LATE_PACKAGES+=" sys-apps/flatpak"
 fi
 
+INSTALL_UUTILS=$(read -n 1 -r -p "Install the Rust port of GNU coreutils instead (uutils)? (https://github.com/uutils/coreutils) - (y/n): ")
+if [ "${INSTALL_UUTILS}" != "n" ]; then
+  message "Adding 'sys-apps/uutils' to PACKAGES"
+  PACKAGES+=" sys-apps/uutils"
+fi
+
 EMERGE_UNATTENDED=$(read -n 1 -r -p "Run the install script (mostly) unattended? - (y/n): ")
 if [ "${EMERGE_UNATTENDED}" != "n" ]; then
   message "Selected unattended"
