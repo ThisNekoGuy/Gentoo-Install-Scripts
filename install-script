@@ -162,6 +162,7 @@ if [ "${INSTALL_FLATPAK}" != "n" ]; then
   LATE_PACKAGES+=" sys-apps/flatpak"
 fi
 
+message "For more information about uutils as of 2022, see: https://youtu.be/ZIgve4YpipE"
 INSTALL_UUTILS=$(read -n 1 -r -p "Install the Rust port of GNU coreutils instead (uutils)? (https://github.com/uutils/coreutils) - (y/n): ")
 if [ "${INSTALL_UUTILS}" != "n" ]; then
   message "Adding 'sys-apps/uutils' to PACKAGES"
