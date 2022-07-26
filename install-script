@@ -983,7 +983,7 @@ EOF
     command ${EMERGE} kde-plasma/plasma-meta
   
     meessage "Installing some critical desktop utilities"
-    command ${EMERGE} kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight sys-block/partitionmanager media-sound/pavucontrol-qt app-admin/keepassxc
+    command ${EMERGE} kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight sys-block/partitionmanager media-sound/pavucontrol-qt media-sound/elisa app-admin/keepassxc
   
     message "Enabling SDDM" # Might work? I don't know, never used OpenRC before
     command rc-update add sddm default
@@ -1363,7 +1363,7 @@ EOF
   if [ ${INSTALL_GAME_EMULATORS} == true ]; then
     message "Installing some emulators and a ROM patching utility"
     command ${EMERGE} --keep-going games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
-    Message "If switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
+    Message "If Switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
   fi
   
   message "Reboot into your newly installed system!"
