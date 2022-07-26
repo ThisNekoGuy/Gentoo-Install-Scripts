@@ -30,7 +30,7 @@ if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
 fi
 
 ## Not entirely sure how enabling "32", "x32", "abi_x86_32" works; my lack of understanding about that may either cause Wine build errors or needlessly installed 32-bit libraries
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable elogind -suid -selinux xattr clang desktop-portal accessibility crypt bluetooth browser-integration pipewire sna dri pulseaudio alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
+USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable elogind -suid -selinux xattr clang desktop-portal accessibility crypt bluetooth browser-integration sna dri pulseaudio pipewire pipewire-alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
 IS_SSD=true # Change to false if the target device is not an SSD drive
@@ -256,33 +256,6 @@ install_gentoo_chroot()
   message "Updating portage tree"
   command emerge --sync
 
-  message "Configuring /etc/portage/make.conf"
-  cat << EOF > /etc/portage/make.conf
-CC="gcc"
-CXX="g++"
-AR="ar"
-NM="nm"
-RANLIB="ranlib"
-CFLAGS="${CFLAGS}"
-CXXFLAGS="\${CFLAGS}"
-RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
-CPU_FLAGS="${CPU_FLAGS}"
-
-# WARNING: Changing your CHOST is not something that should be done lightly.
-# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
-CHOST="x86_64-pc-linux-gnu"
-# These are the USE flags that were used in addition to what is provided by the
-# profile used for building.
-USE="${USE_FLAGS}"
-MAKEOPTS="-j\$((\$(nproc)+1))"
-PORTDIR="/usr/portage"
-DISTDIR="${PORTDIR}/distfiles"
-PKGDIR="${PORTDIR}/packages"
-ACCEPT_LICENSE="*"
-VIDEO_CARDS="${USED_VIDEO_CARDS}"
-EOF
-
   message "Configuring /etc/portage/env/compiler-gcc"
   cat << EOF > /etc/portage/env/compiler-gcc
 CC="gcc"
@@ -310,6 +283,40 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-gcc
+  
+  message "Configuring /etc/portage/make.conf"
+  if [ -f /etc/portage/make.conf ]; then
+  cp -v /etc/portage/make.conf /etc/portage/make.conf.bak
+  fi
+  cp -v /etc/portage/env/compiler-gcc /etc/portage/make.conf
+  
+  message "Configuring /etc/portage/env/compiler-gcc-static"
+  cat << EOF > /etc/portage/env/compiler-gcc-static
+CC="gcc"
+CXX="g++"
+AR="ar"
+NM="nm"
+RANLIB="ranlib"
+CFLAGS="${CFLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j\$((\$(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
+EOF
+  chmod 755 /etc/portage/env/compiler-gcc-static
 
   message "Configuring /etc/portage/env/compiler-gcc-nvidia"
   cat << EOF > /etc/portage/env/compiler-gcc-nvidia
@@ -469,6 +476,49 @@ ACCEPT_LICENSE="*"
 VIDEO_CARDS="${USED_VIDEO_CARDS}"
 EOF
   chmod 755 /etc/portage/env/compiler-clang
+  
+  message "Configuring /etc/portage/env/compiler-clang-static"
+  cat << EOF > /etc/portage/env/compiler-clang-static
+### See:
+## https://wiki.gentoo.org/wiki/Clang
+## https://bugs.gentoo.org/408963
+## and
+## https://github.com/BilyakA/gentoo-clang 
+### for building an exclusively clang system
+
+CC="clang"
+CXX="clang++"
+OBJC=clang
+LD="/usr/bin/ld.lld"
+AS="llvm-as"
+### Ignore these three for non-LTO builds:
+AR=""
+NM=""
+RANLIB=""
+###
+STRIP="llvm-strip"
+OBJCOPY="llvm-objcopy"
+_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
+CXXFLAGS="\${CFLAGS}"
+RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+CPU_FLAGS="${CPU_FLAGS}"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS} libcxxabi libunwind"
+MAKEOPTS="-j\$((\$(nproc)+1))"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+ACCEPT_LICENSE="*"
+VIDEO_CARDS="${USED_VIDEO_CARDS}"
+EOF
+  chmod 755 /etc/portage/env/compiler-clang-static
 
   message "Configuring /etc/portage/env/compiler-clang-nvidia"
   cat << EOF > /etc/portage/env/compiler-clang-nvidia
@@ -926,7 +976,7 @@ EOF
     command ${EMERGE} kde-plasma/plasma-meta
   
     meessage "Installing some critical desktop utilities"
-    command ${EMERGE} kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight media-sound/pavucontrol-qt app-admin/keepassxc
+    command ${EMERGE} kde-apps/yakuake kde-apps/konsole kde-apps/dolphin kde-apps/ark kde-apps/kate kde-apps/filelight sys-block/partitionmanager media-sound/pavucontrol-qt app-admin/keepassxc
   
     message "Enabling SDDM" # Might work? I don't know, never used OpenRC before
     command rc-update add sddm default
@@ -1287,14 +1337,18 @@ EOF
 
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
-games-emulation/rpcs3 compiler-clang
-games-emulation/xemu compiler-gcc-lto
+games-emulation/rpcs3 compiler-clang-static
+games-emulation/xemu compiler-gcc-static-lto
 EOF
 
   message "Syncing tatsh-overlay repo"
   command emaint sync -r tatsh-overlay
   
   if [ ${INSTALL_NVIDIA_DRIVER} != false ]; then
+    message "Configuring /etc/portage/package.unmask/tatsh-overlay"
+    cat << EOF > /etc/portage/package.unmask/tatsh-overlay
+media-plugins/nvidia-vaapi-driver::tatsh-overlay
+EOF
     message "Installing media-plugins/nvidia-vaapi-driver::tatsh-overlay"
     command ${EMERGE} media-plugins/nvidia-vaapi-driver
   fi
