@@ -225,19 +225,19 @@ install_gentoo_prep ()
   message "Copying DNS info"
   command cp -L /etc/resolv.conf "${MOUNT_LOCATION}"/etc/
 
-  message "Mounting Necessary Filesystems"
-  command mount -t proc proc /mnt/gentoo/proc
-  command mount --rbind /sys /mnt/gentoo/sys
-  command mount --make-rslave /mnt/gentoo/sys
-  command mount --rbind /dev /mnt/gentoo/dev
-  command mount --make-rslave /mnt/gentoo/dev
-  
   if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
     message "Installing genfstab"
     command emerge --oneshot --noreplace sys-fs/genfstab
     message "Generating fstab file"
     command genfstab -L / >> "${MOUNT_LOCATION}/etc/fstab"
   fi
+  
+  message "Mounting Necessary Filesystems"
+  command mount -t proc proc /mnt/gentoo/proc
+  command mount --rbind /sys /mnt/gentoo/sys
+  command mount --make-rslave /mnt/gentoo/sys
+  command mount --rbind /dev /mnt/gentoo/dev
+  command mount --make-rslave /mnt/gentoo/dev
 
   message "Chrooting into System"
   command chroot "${MOUNT_LOCATION}" /bin/bash -c "install_gentoo_chroot"
@@ -1208,17 +1208,22 @@ EOF
   chmod 755 /etc/env.d/user-configs.sh
   chmod +x /etc/env.d/user-configs.sh
   
-  if [ ${INSTALL_STEAM} != "n" ]; then
     message "Enabling steam-overlay repo"
     command eselect repository enable steam-overlay
     message "Syncing steam-overlay repo"
     command emaint sync -r steam-overlay
+    
+  if [ ${INSTALL_STEAM} != "n" ]; then
     message "Configuring '/etc/portage/package.accept_keywords' and Installing Steam"
     cat << EOF > /etc/portage/package.accept_keywords
 */*::steam-overlay
 EOF
     command ${EMERGE} games-util/steam-meta
   else
+    message "Configuring '/etc/portage/package.accept_keywords'"
+    cat << EOF > /etc/portage/package.accept_keywords
+*/*::steam-overlay
+EOF
     message "Configuring /etc/portage/package.mask/steam-overlay"
   cat << EOF > /etc/portage/package.mask/steam-overlay
 */*::steam-overlay
@@ -1296,7 +1301,7 @@ EOF
 
   if [ ${INSTALL_GAME_EMULATORS} == true ]; then
     message "Installing some emulators and a ROM patching utility"
-    command emerge --keep-going games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
+    command ${EMERGE} --keep-going games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
     Message "If switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
   fi
   
