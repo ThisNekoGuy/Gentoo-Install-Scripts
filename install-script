@@ -254,7 +254,7 @@ install_gentoo_prep ()
   command mount --make-rslave /mnt/gentoo/dev
 
   message "Chrooting into System"
-  command chroot "${MOUNT_LOCATION}" /bin/bash -c "install_gentoo_chroot"
+  command chroot "${MOUNT_LOCATION}" /bin/env -i TERM=${TERM} /bin/bash -c "install_gentoo_chroot"
 }
 
 install_gentoo_chroot()
