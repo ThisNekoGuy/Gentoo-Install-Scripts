@@ -133,6 +133,12 @@ command ()
   fi
 }
 
+## TO-DO: setting up musl is a bit odd
+## https://wiki.gentoo.org/wiki/Project:Musl
+# INSTALL_MUSL=$(command read -n 1 -r -p "Install musl? (more POSIX complaint glibc replacement) - (y/n): ")
+# if [ ${INSTALL_MUSL} != "n" ]; then
+#   
+# fi
 
 INSTALL_KDE_PLASMA=$(command read -n 1 -r -p "Install KDE Plasma? (y/n): ")
 if [ ${INSTALL_KDE_PLASMA} != "n" ]; then
