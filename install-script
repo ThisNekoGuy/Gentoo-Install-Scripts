@@ -218,12 +218,13 @@ install_gentoo_prep ()
   fi
 
   #Stage3 Tarball
-  message "Copying stage3 tarball to system"
-  command cp -rv "${STAGE3}" "${MOUNT_LOCATION}"
-  command cd "${MOUNT_LOCATION}"
+#   message "Copying stage3 tarball to system"
+#   command cp -rv "${STAGE3}" "${MOUNT_LOCATION}"
+#   command cd "${MOUNT_LOCATION}"
 
   message "Extracting stage3 tarball"
-  command tar xvjpf stage3-*.tar.bz2 --xattrs
+  command tar --numeric-owner --xattrs xvjpf stage3-*.tar.bz2 -C ${MOUNT_LOCATION}
+  command cd "${MOUNT_LOCATION}"
 
   message "Copying configuration files"
   command mkdir -pv "${MOUNT_LOCATION}/etc"
