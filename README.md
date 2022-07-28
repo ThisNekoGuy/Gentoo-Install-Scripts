@@ -8,13 +8,13 @@ https://gitlab.com/N3k0-san/Gentoo-Install-Scripts
 https://github.com/ThisNekoGuy/Gentoo-Install-Scripts
 
 # Usage
-Boot the Gentoo live cd and clone this repository inside the live cd. Then, create your partitions and run the script.
+Boot either a Gentoo-based or Arch-based live-CD, create your partitions like the examples below, then run the script.
 
 # Important 
 By default, the script does not use the partition table in the Gentoo handbook.
 Be sure to partition your drive first, and check the script to make sure it targets the correct drive near the top (simple to do); no need to format it, the script does this.
 
-Filesystem<br />
+Filesystem Paritions:<br />
 `/dev/nvme0np1 ->` Boot partition<br />
 `/dev/nvme0np2 ->` Swap partition<br />
 `/dev/nvme0np3 ->` Root partition<br /><br />
