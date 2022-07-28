@@ -1,5 +1,35 @@
 #!/bin/bash
 
+
+GET_ARCH="$(lscpu | grep -w '^Architecture' | sed 's/\s\s*/ /g' | cut -d ' ' -f 1 --complement | cut -d ' ' -f 1 -z)"
+
+case "${GET_ARCH}" in
+  x86_64)
+  ;;
+  
+  aarch64)
+  echo "Support for ${GET_ARCH} is in the works."
+  ;;
+  
+  *)
+  echo "Support for ${GET_ARCH} is unavailable for this script at this time."
+  ;;
+esac
+
+if test -x "$(command -v pacman > /dev/null 2>&1)"; then
+  if ! test -x "$(command -v genfstab > /dev/null 2>&1)"; then
+    echo "Package 'arch-install-scripts' needs to be installed; please install it first."
+    return 1
+  fi
+  DISTRO="Arch-based"
+elif test -x "$(command -v emerge > /dev/null 2>&1)"; then
+  DISTRO="Gentoo-based"
+else
+  echo "Either an Arch-based or Gentoo-based distro is required to use this script."
+  return 1
+fi
+
+
 LRED='\033[01;31m'
 GREEN='\033[0;32m'
 LCYAN='\033[1;36m'
@@ -24,7 +54,24 @@ CFLAGS="-march=${CPU_ARCH} -mtune-${CPU_ARCH} -O3 -pipe -fno-plt"
 # We want the CPU_FLAGS given by "cpuid2cpuflags" - this implementation only supports x86/x86_64 right now
 if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
   echo "Installing cpuid2cpuflags"
-  emerge --oneshot --noreplace cpuid2cpuflags
+  case "${DISTRO}" in
+    "Arch-based")
+    if test -x "$( ! command -v cpuid2cpuflags > /dev/null 2>&1)"; then
+      echo "The 'cpuid2cpuflags' package is required to run this script."
+      echo "Please install it from the AUR before proceeding."
+      return 1
+    fi
+    ;;
+    "Gentoo-based")
+    emerge --oneshot --noreplace cpuid2cpuflags
+    ;;
+    *)
+    if test -x "$( ! command -v cpuid2cpuflags > /dev/null 2>&1)"; then
+      echo "Non-supported distro in-use; exiting."
+      return 1
+    fi
+    ;;
+  esac
   echo "Setting CPU_FLAGS"
   CPU_FLAGS=$(cpuid2cpuflags | cut -c 1-15 --complement)
 fi
@@ -60,7 +107,7 @@ LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch n
 ## changing all of the "nvme0n1" references to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
 ## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
 
-if [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || [ -x "$(command -v lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 2>/dev/null)" ] && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
+if test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)"  && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)" ] && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
   BOOT_PARTITION=/dev/nvme0n1p1
   SWAP_PARTITION=/dev/nvme0n1p2
   ROOT_PARTITION=/dev/nvme0n1p3
@@ -87,7 +134,7 @@ TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate sys-apps/man-pages
 
 
 ## Video card check
-# Note: A bash case check would look prettier here
+# Note: A bash case check would look prettier here; might need help with doing this here though
 if [ ${INSTALL_INTEL_DRIVER} != false ]; then
   USE+=" intel"
   USED_VIDEO_CARDS="intel"
@@ -129,7 +176,7 @@ command ()
   $@
   if [ $? -ne 0 ]; then
     echo -e "$LREDFailed$NC"
-    exit 1
+    return 1
   fi
 }
 
@@ -238,14 +285,41 @@ install_gentoo_prep ()
   ## Chroot
   message "Copying DNS info"
   command cp -L /etc/resolv.conf "${MOUNT_LOCATION}"/etc/
-
-  if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
-    message "Installing genfstab"
-    command emerge --oneshot --noreplace sys-fs/genfstab
-    message "Generating fstab file"
-    command genfstab -L / >> "${MOUNT_LOCATION}/etc/fstab"
-  fi
   
+  case "${DISTRO}" in
+    "Arch-based")
+    if test -x "$(command pacman -Qi arch-install-scripts > /dev/null 2>&1)"; then
+      if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
+        message "Generating fstab file"
+        command genfstab -L / >> "${MOUNT_LOCATION}/etc/fstab"
+      fi
+    else
+      echo "Dependency 'arch-install-scripts' was not found."
+      return 1
+    fi
+    ;;
+    
+    "Gentoo-based")
+      if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
+        message "Installing genfstab"
+        command emerge --oneshot --noreplace sys-fs/genfstab
+        message "Generating fstab file"
+        command genfstab -L / >> "${MOUNT_LOCATION}/etc/fstab"
+      fi
+    ;;
+    
+    *)
+    if test -x "$(command genfstab > /dev/null 2>&1)"; then
+      if [ ${IS_SSD} != true ] || [ ${IS_SSD} != true ] && [ ${IS_NVME} != true ]; then
+        message "Generating fstab file"
+        command genfstab -L / >> "${MOUNT_LOCATION}/etc/fstab"
+      fi
+    else
+      echo "Non-supported distro type is being used; returning."
+      return 1
+    fi
+    ;;
+  esac
   message "Mounting Necessary Filesystems"
   command mount -t proc proc /mnt/gentoo/proc
   command mount --rbind /sys /mnt/gentoo/sys
@@ -254,7 +328,7 @@ install_gentoo_prep ()
   command mount --make-rslave /mnt/gentoo/dev
 
   message "Chrooting into System"
-  command chroot "${MOUNT_LOCATION}" /bin/env -i TERM=${TERM} /bin/bash -c "install_gentoo_chroot"
+  command chroot "${MOUNT_LOCATION}" /bin/env -i TERM="${TERM}" /bin/bash -c "install_gentoo_chroot"
 }
 
 install_gentoo_chroot()
@@ -1155,6 +1229,7 @@ EOF
     cat << EOF > /etc/portage/profile/packages
 *app-admin/doas
 EOF
+  fi
   
   if [ -x "$(command echo "${LATE_PACKAGES}" | grep sudo 2>/dev/null)"  ] || [ -x "$(command echo "${TOOLS}" | grep sudo 2>/dev/null)" ] || [ -x "$(command ls /usr/bin | grep sudo 1>/dev/null)" ]; then
     message "Configuring /etc/sudoers"
@@ -1228,16 +1303,16 @@ alias grubRebuild="grub-mkconfig -o /boot/grub/grub.cfg"
 alias vulnerabilities="grep -r . /sys/devices/system/cpu/vulnerabilities/"
 
 ## Set SSH storage requests to Kwallet if present
-if [ -f /usr/bin/ksshaskpass ]; then 
+if [ -n "\${DISPLAY}" ] && [ -f /usr/bin/ksshaskpass ]; then 
     export SSH_ASKPASS='/usr/bin/ksshaskpass'
 fi
 
 ## Sets the system editor(s)
-if [ -n "\$DISPLAY" ] && [ -x "\$(command -v kate 2>/dev/null)" ]; then
+if [ -n "\${DISPLAY}" ] && test -x "\$(command -v kate > /dev/null 2>&1)"; then
     export EDITOR=/usr/bin/kate
-elif [ -n "\$DISPLAY" ] && [ -x "\$(command -v code 2>/dev/null)" ]; then
+elif [ -n "\${DISPLAY}" ] && test -x "\$(command -v code > /dev/null 2>&1)"; then
     export EDITOR=/usr/bin/code
-elif [ -x "\$(command -v nano 2>/dev/null)" ]; then 
+elif test -x "\$(command -v nano > /dev/null 2>&1)"; then 
     export EDITOR=/usr/bin/nano;
 fi
 
@@ -1249,10 +1324,11 @@ fi
 ## Example formatting: cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/example_repository/{CATEGORY}/{PN}
 alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/temp-overlay/temp-category/skel.ebuild; cd /var/db/repos/temp-overlay/temp-category/; xdg-open /var/db/repos/gentoo/skel.ebuild"
 
+
 ## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
-if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test "\$(command pacman -Qn | grep -w "^kwinft" | cut -d " " -f 1)" == "kwinft"; then
+if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command pacman -Qn | grep -w "^kwinft" | cut -d " " -f 1)" == "kwinft"; then
     export KWIN_TRIPLE_BUFFER=0
-elif [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test "\$(command pacman -Qn | grep -w "^kwin" | cut -d " " -f 1)" == "kwin"; then
+elif [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command pacman -Qn | grep -w "^kwin" | cut -d " " -f 1)" == "kwin"; then
     export KWIN_TRIPLE_BUFFER=1
     #export KWIN_OPENGL_INTERFACE=egl
 fi
@@ -1268,6 +1344,7 @@ fi
 #if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ]; then
 #    export VK_ICD_FILENAMES='/usr/share/vulkan/icd.d/nvidia_icd.json'
 #fi
+
 EOF
   chmod 755 /etc/env.d/user-configs.sh
   chmod +x /etc/env.d/user-configs.sh
@@ -1277,7 +1354,7 @@ EOF
     message "Syncing steam-overlay repo"
     command emaint sync -r steam-overlay
     
-  if [ ${INSTALL_STEAM} != "n" ]; then
+  if [ "${INSTALL_STEAM}" != "n" ]; then
     message "Configuring '/etc/portage/package.accept_keywords' and Installing Steam"
     cat << EOF > /etc/portage/package.accept_keywords
 */*::steam-overlay
@@ -1390,6 +1467,7 @@ export LPURPLE
 export DGRAY
 export NC
 
+export DISTRO
 export TIMEZONE
 export AUTODETECT_CPU_ARCH
 export AUTODETECT_CPU_FLAGS
