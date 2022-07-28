@@ -107,7 +107,7 @@ LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch n
 ## changing all of the "nvme0n1" references to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
 ## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
 
-if test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)"  && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)" ] && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
+if test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)"  && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)" && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
   BOOT_PARTITION=/dev/nvme0n1p1
   SWAP_PARTITION=/dev/nvme0n1p2
   ROOT_PARTITION=/dev/nvme0n1p3
@@ -167,13 +167,13 @@ fi
 message ()
 {
   echo
-  echo -e " $LBLUE>>> $LRED $@ $NC"
+  echo -e " $LBLUE>>> $LRED $* $NC"
 }
 
 command ()
 {
-  echo -e "$LCYAN$@$NC"
-  $@
+  echo -e "$LCYAN$*$NC"
+  "$@"
   if [ $? -ne 0 ]; then
     echo -e "$LREDFailed$NC"
     return 1
@@ -188,7 +188,7 @@ command ()
 # fi
 
 INSTALL_KDE_PLASMA=$(command read -n 1 -r -p "Install KDE Plasma? (y/n): ")
-if [ ${INSTALL_KDE_PLASMA} != "n" ]; then
+if [ "${INSTALL_KDE_PLASMA}" != "n" ]; then
   USE_FLAGS+=" colord crash-handler display-manager firewall gtk kde legacy-systray networkmanager qt5 sddm semantic-desktop smart telemetry -discover -gnome -kwallet -qt4 -wallpapers"
 fi
 
@@ -270,7 +270,8 @@ install_gentoo_prep ()
 #   command cd "${MOUNT_LOCATION}"
 
   message "Extracting stage3 tarball"
-  command tar --numeric-owner --xattrs xvjpf stage3-*.tar.bz2 -C ${MOUNT_LOCATION}
+  command tar --numeric-owner --xattrs xvjpf "${STAGE3}" -C "${MOUNT_LOCATION}"
+  command rm "${STAGE3}"
   command cd "${MOUNT_LOCATION}"
 
   message "Copying configuration files"
