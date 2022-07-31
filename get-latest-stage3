@@ -6,15 +6,37 @@ SCRIPT_DIR=$(cd "${DIRNAME}" && pwd)
 
 DESTINATION="${SCRIPT_DIR}/stage3"
 
-function stage3Download() {
-	printf "\n"
-	mkdir -p "${SCRIPT_DIR}/stage3"
-	echo -e "\e[33m\xe2\x8f\xb3 Downloading the stage 3 tarball... \e[m"	
-	LATEST=$(wget --quiet https://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64-openrc.txt -O-| tail -n 1 | cut -d " " -f 1)
-	BASENAME=$(basename "${LATEST}")
-	wget -q --show-progress "http://distfiles.gentoo.org/releases/amd64/autobuilds/${LATEST}" -O "${DESTINATION}/${BASENAME}"
-	BASENAME=$(basename "${STAGE3}")
-	wget -q --show-progress "${STAGE3}" -O "${DESTINATION}/${BASENAME}"
-}
+case ${GENTOO_DESKTOP} in
+
+	"y")
+	function stage3Download() {
+		printf "\n"
+		mkdir -p "${SCRIPT_DIR}/stage3"
+		echo -e "\e[33m\xe2\x8f\xb3 Downloading the stage 3 tarball... \e[m"	
+		LATEST=$(wget --quiet https://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-desktop-openrc.txt -O-| tail -n 1 | cut -d " " -f 1)
+		BASENAME=$(basename "${LATEST}")
+		wget -q --show-progress "http://distfiles.gentoo.org/releases/amd64/autobuilds/${LATEST}" -O "${DESTINATION}/${BASENAME}"
+		BASENAME=$(basename "${STAGE3}")
+		wget -q --show-progress "${STAGE3}" -O "${DESTINATION}/${BASENAME}"
+	}
+	;;
+
+	"n")
+	function stage3Download() {
+		printf "\n"
+		mkdir -p "${SCRIPT_DIR}/stage3"
+		echo -e "\e[33m\xe2\x8f\xb3 Downloading the stage 3 tarball... \e[m"	
+		LATEST=$(wget --quiet https://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64-openrc.txt -O-| tail -n 1 | cut -d " " -f 1)
+		BASENAME=$(basename "${LATEST}")
+		wget -q --show-progress "http://distfiles.gentoo.org/releases/amd64/autobuilds/${LATEST}" -O "${DESTINATION}/${BASENAME}"
+		BASENAME=$(basename "${STAGE3}")
+		wget -q --show-progress "${STAGE3}" -O "${DESTINATION}/${BASENAME}"
+	}
+	;;
+	
+	*)
+	echo "Error in script: 'get-latest-stage3'"
+	return 1
+	;;
 
 stage3Download

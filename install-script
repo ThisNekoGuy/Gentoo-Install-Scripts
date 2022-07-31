@@ -180,39 +180,49 @@ command ()
   fi
 }
 
-## TO-DO: setting up musl is a bit odd
-## https://wiki.gentoo.org/wiki/Project:Musl
-# INSTALL_MUSL=$(command read -n 1 -r -p "Install musl? (more POSIX complaint glibc replacement) - (y/n): ")
-# if [ ${INSTALL_MUSL} != "n" ]; then
-#   
-# fi
 
-INSTALL_KDE_PLASMA=$(command read -n 1 -r -p "Install KDE Plasma? (y/n): ")
-if [ "${INSTALL_KDE_PLASMA}" != "n" ]; then
-  USE_FLAGS+=" colord crash-handler display-manager firewall gtk kde legacy-systray networkmanager qt5 sddm semantic-desktop smart telemetry -discover -gnome -kwallet -qt4 -wallpapers"
+GENTOO_DESKTOP=$(command read -n 1 -r -p "Is the desired installation intended to be a desktop? (y/n)")
+case "${GENTOO_DESKTOP}" in
+  "y")
+  message "Using a desktop configuration"
+  
+  INSTALL_KDE_PLASMA=$(command read -n 1 -r -p "Install KDE Plasma? (y/n): ")
+  if [ "${INSTALL_KDE_PLASMA}" != "n" ]; then
+    USE_FLAGS+=" colord crash-handler display-manager firewall gtk kde legacy-systray networkmanager qt5 sddm semantic-desktop smart telemetry -discover -gnome -kwallet -qt4 -wallpapers"
+  
+  INSTALL_WINE=$(read -n 1 -r -p "Install Wine? (https://wiki.gentoo.org/wiki/Wine) - (y/n): ")
+  if [ "${INSTALL_WINE}" != "n" ]; then
+    message "Adding Wine packages to LATE_PACKAGES"
+    LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common"
+  fi
+  
+  INSTALL_STEAM=$(read -n 1 -r -p "Install Steam? (https://wiki.gentoo.org/wiki/Steam) - (y/n): ")
+  if [ "${INSTALL_STEAM}" != "n" ]; then
+    message "Enabling Steam for installation later"
+  fi
+
+  INSTALL_FLATPAK=$(read -n 1 -r -p "Install flatpak? (https://wiki.gentoo.org/wiki/Flatpak) - (y/n): ")
+  if [ "${INSTALL_FLATPAK}" != "n" ]; then
+    message "Adding flatpak packages to LATE_PACKAGES"
+    LATE_PACKAGES+=" sys-apps/flatpak"
+  fi
+  ;;
+  "n")
+  message "Using a minimal configuration"
+  ;;
+  *)
+  ## I want to use case switches instead of these if-checks but I need proper error handling implementation first to avoid breaking the script in the event a user mistake is made
+  message "A system type must be selected."
+  return 1
+  ;;
+esac
+
 fi
 
 INSTALL_DOAS=$(read -n 1 -r -p "Install doas? (It's a smaller sudo replacement semi-ported from BSD-land) - (y/n): ")
 if [ "${INSTALL_DOAS}" != "n" ]; then
   message "Adding 'doas' to TOOLS"
   TOOLS+=" app-admin/doas"
-fi
-
-INSTALL_WINE=$(read -n 1 -r -p "Install Wine? (https://wiki.gentoo.org/wiki/Wine) - (y/n): ")
-if [ "${INSTALL_WINE}" != "n" ]; then
-  message "Adding Wine packages to LATE_PACKAGES"
-  LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common"
-fi
-
-INSTALL_STEAM=$(read -n 1 -r -p "Install Steam? (https://wiki.gentoo.org/wiki/Steam) - (y/n): ")
-if [ "${INSTALL_STEAM}" != "n" ]; then
-  message "Enabling Steam for installation later"
-fi
-
-INSTALL_FLATPAK=$(read -n 1 -r -p "Install flatpak? (https://wiki.gentoo.org/wiki/Flatpak) - (y/n): ")
-if [ "${INSTALL_FLATPAK}" != "n" ]; then
-  message "Adding flatpak packages to LATE_PACKAGES"
-  LATE_PACKAGES+=" sys-apps/flatpak"
 fi
 
 message "For more information about uutils as of 2022, see: https://youtu.be/ZIgve4YpipE"
@@ -1473,6 +1483,7 @@ export DGRAY
 export NC
 
 export DISTRO
+export GENTOO_DESKTOP
 export TIMEZONE
 export AUTODETECT_CPU_ARCH
 export AUTODETECT_CPU_FLAGS
