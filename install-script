@@ -77,7 +77,7 @@ if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
 fi
 
 ## Not entirely sure how enabling "32", "x32", "abi_x86_32" works; my lack of understanding about that may either cause Wine build errors or needlessly installed 32-bit libraries
-USE_FLAGS="X wayland acl bindist mmx sse sse2 initramfs redistributable elogind -suid -selinux xattr clang desktop-portal accessibility crypt bluetooth browser-integration sna dri pulseaudio pipewire pipewire-alsa dbus policykit unicode sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
+USE_FLAGS="a52 aac acpi branding cairo cdr dbus dri dts dvd dvdr encode exif flac gif gpm gui icu jpeg lcms libnotify mad mng mp3 mp4 mpeg ogg pdf png ppds spell startup-notification svg tiff truetype vorbis udev udisks unicode upower usb wxwidgets x264 xml xv xvid X xcb wayland acl bindist mmx sse sse2 initramfs redistributable elogind -suid -selinux xattr clang desktop-portal accessibility crypt bluetooth browser-integration sna pulseaudio pipewire pipewire-alsa policykit sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
 MAKE_OPTIONS="-j\$((\$(nproc)+1))"
 
 IS_SSD=true # Change to false if the target device is not an SSD drive
@@ -1395,6 +1395,7 @@ EOF
 *sys-libs/pam
 *app-admin/mcelog
 *games-util/steam-meta::steam-overlay
+*app-shells/bash
 *app-editors/nano
 *sys-devel/gcc
 *sys-devel/clang
