@@ -385,7 +385,7 @@ EOF
   
   message "Configuring /etc/portage/make.conf"
   if [ -f /etc/portage/make.conf ]; then
-  cp -v /etc/portage/make.conf /etc/portage/make.conf.bak
+  cp -v /etc/portage/make.conf /etc/portage/make.conf.default.bak
   fi
   cp -v /etc/portage/env/compiler-gcc /etc/portage/make.conf
   
