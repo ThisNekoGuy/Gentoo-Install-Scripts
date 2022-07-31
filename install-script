@@ -443,13 +443,15 @@ CXX="g++"
 AR="ar"
 NM="nm"
 RANLIB="ranlib"
-CFLAGS="${CFLAGS/-fno-plt/}"
+_CLFAGS="${CFLAGS/-fno-plt/}" ## Wine Doesn't play nice with -fno-plt
+_CLFAGS="\${_CFLAGS/-O3/}" ## Wine is faster with -O2
+CFLAGS="\${_CFLAGS} -O2"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
-CROSSCFLAGS="${CFLAGS}"
-CROSSCXXFLAGS="${CXXFLAGS}"
-CROSSLDFLAGS="${LDFLAGS}"
+LDFLAGS="-Wl,-O3,--sort-common,--as-needed" ## mingw can't use relro
+CROSSCFLAGS="\${CFLAGS}"
+CROSSCXXFLAGS="\${CXXFLAGS}"
+CROSSLDFLAGS="\${LDFLAGS}"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -675,11 +677,12 @@ RANLIB=""
 ### Wine doesn't play nice with LTO; it usually doesn't compile
 STRIP="llvm-strip"
 OBJCOPY="llvm-objcopy"
-_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
-CFLAGS="${CFLAGS/-fno-plt/} -std=gnu89 \${_HARDENING_FLAGS}"
+_CLFAGS="${CFLAGS/-fno-plt/}" ## Wine Doesn't play nice with -fno-plt
+_CLFAGS="\${_CFLAGS/-O3/}" ## Wine is faster with -O2
+CFLAGS="\${_CFLAGS} -O2 -std=gnu89"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O2,--sort-common,--as-needed" ## mingw can't use relro
 CROSSCFLAGS="${CFLAGS}"
 CROSSCXXFLAGS="${CXXFLAGS}"
 CROSSLDFLAGS="${LDFLAGS}"
