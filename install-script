@@ -108,19 +108,22 @@ LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch n
 ## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
 
 ## This fails with a too many arguments error
-if test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)"  && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)" && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
-  BOOT_PARTITION=/dev/nvme0n1p1
-  SWAP_PARTITION=/dev/nvme0n1p2
-  ROOT_PARTITION=/dev/nvme0n1p3
-elif [ ${IS_SSD} != false ]; then
-  BOOT_PARTITION=/dev/sda1
-  SWAP_PARTITION=/dev/sda2
-  ROOT_PARTITION=/dev/sda3
-else
-  BOOT_PARTITION=/dev/sda1
-  SWAP_PARTITION=/dev/sda2
-  ROOT_PARTITION=/dev/sda3
-fi
+# if test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)"  && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)" && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
+#   BOOT_PARTITION=/dev/nvme0n1p1
+#   SWAP_PARTITION=/dev/nvme0n1p2
+#   ROOT_PARTITION=/dev/nvme0n1p3
+# elif [ ${IS_SSD} != false ]; then
+#   BOOT_PARTITION=/dev/sda1
+#   SWAP_PARTITION=/dev/sda2
+#   ROOT_PARTITION=/dev/sda3
+# else
+#   BOOT_PARTITION=/dev/sda1
+#   SWAP_PARTITION=/dev/sda2
+#   ROOT_PARTITION=/dev/sda3
+# fi
+
+echo "There's a problem with this script at the moment; please wait until the above type of issue is resolved."
+return 1
 
 ## This script only supports BTRFS right now; feel free to make a PR for other options in addition to BTRFS if you know bash
 ROOT_FS_TYPE=btrfs
