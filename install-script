@@ -1360,9 +1360,7 @@ alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db
 
 
 ## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
-if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command pacman -Qn | grep -w "^kwinft" | cut -d " " -f 1)" == "kwinft"; then
-    export KWIN_TRIPLE_BUFFER=0
-elif [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command pacman -Qn | grep -w "^kwin" | cut -d " " -f 1)" == "kwin"; then
+if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1); then
     export KWIN_TRIPLE_BUFFER=1
     #export KWIN_OPENGL_INTERFACE=egl
 fi
