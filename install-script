@@ -683,9 +683,9 @@ CFLAGS="\${_CFLAGS} -O2 -std=gnu89"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
 LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O2,--sort-common,--as-needed" ## mingw can't use relro
-CROSSCFLAGS="${CFLAGS}"
-CROSSCXXFLAGS="${CXXFLAGS}"
-CROSSLDFLAGS="${LDFLAGS}"
+CROSSCFLAGS="\${CFLAGS}"
+CROSSCXXFLAGS="\${CXXFLAGS}"
+CROSSLDFLAGS="\${LDFLAGS}"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
