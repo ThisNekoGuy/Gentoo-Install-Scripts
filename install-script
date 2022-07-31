@@ -457,7 +457,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
+USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads unwind xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
@@ -690,7 +690,7 @@ CPU_FLAGS="${CPU_FLAGS}"
 CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
-USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads truetype udev udisks unwind usb xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw libcxxabi libunwind"
+USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads unwind xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw libcxxabi libunwind"
 MAKEOPTS="-j\$((\$(nproc)+1))"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
