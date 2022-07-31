@@ -805,6 +805,8 @@ EOF
   
   #  command read -r -p "Enter the desired profile value via 'eselect profile set ': "
   #  command read -n 1 -r -p "Enter the desired profile value: " | eselect profile set
+  case ${GENTOO_DESKTOP} in
+  "y")
   
   if [ "${INSTALL_KDE_PLASMA}" != "n" ]; then
     plasma_profile_selection () {
@@ -819,6 +821,12 @@ EOF
     }
     plasma_profile_selection
   fi
+  
+  ;;
+  
+  "n")
+  ;;
+  esac
 
   message "Updating @world set"
   command ${EMERGE} --update --deep --newuse @world
@@ -1070,6 +1078,9 @@ REMOTE_LIST_CACHEDIR=~/.cache/eselect-repo
 REMOTE_LIST_REFRESH=\$(( 2 * 3600 ))
 EOF
   
+  case ${GENTOO_DESKTOP} in
+  "y")
+  
   ## This script only supports installing KDE Plasma right now; if you want, consider creating your own block for your preferred desktop and critical utilities
   ## and make a pull request for others to enjoy!
   
@@ -1091,11 +1102,20 @@ polkit.addAdminRule(function(action, subject) {
 EOF
   fi
   
+  ### Add your desired desktop here:
+  
+  
+  
+  ###
   
   INSTALL_KUROO=$(read -n 1 -r -p "Install Kuroo (emerge/portage GUI)? - This is optional - (y/n): ")
   if [ "${INSTALL_KUROO}" != "n" ]; then
     command ${EMERGE} app-portage/kuroo
   fi
+  ;;
+  "n")
+  ;;
+  esac
   
   ## https://bugs.gentoo.org/830486 - Someone should look into this, seriously; Arch Linux uses it by default, and coming from Arch, some may be inclined to use it
   message "Installing shadow password manager"
@@ -1363,10 +1383,13 @@ EOF
   chmod 755 /etc/env.d/user-configs.sh
   chmod +x /etc/env.d/user-configs.sh
   
-    message "Enabling steam-overlay repo"
-    command eselect repository enable steam-overlay
-    message "Syncing steam-overlay repo"
-    command emaint sync -r steam-overlay
+  case ${GENTOO_DESKTOP} in
+  
+  "y")
+  message "Enabling steam-overlay repo"
+  command eselect repository enable steam-overlay
+  message "Syncing steam-overlay repo"
+  command emaint sync -r steam-overlay
     
   if [ "${INSTALL_STEAM}" != "n" ]; then
     message "Configuring '/etc/portage/package.accept_keywords' and Installing Steam"
@@ -1384,6 +1407,11 @@ EOF
 */*::steam-overlay
 EOF
   fi
+  ;;
+  
+  "n")
+  ;;
+  esac
 
   message "Configuring /etc/portage/profile/packages"
   cat << EOF > /etc/portage/profile/packages
@@ -1420,7 +1448,10 @@ EOF
 *sys-libs/libcxx
 EOF
   chmod 755 /etc/portage/profile/packages
-
+  
+  case ${GENTOO_DESKTOP} in
+  
+  "y")
   message "Enabling game-related overlay 'tatsh-overlay'"
   command eselect repository enable tatsh-overlay
   
@@ -1464,6 +1495,11 @@ EOF
     command ${EMERGE} --keep-going games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
     Message "If Switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
   fi
+  ;;
+  
+  "n")
+  ;;
+  esac
   
   message "Reboot into your newly installed system!"
   return 0
