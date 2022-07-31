@@ -2,6 +2,7 @@ To-do list:
 -----------
 
 - Test the script on actual hardware for bug testing
+- Fix the "too many arguments" errors caused by the test command
 - Add a system timer that waits 24 hours before permitting "emerge --sync" to run again; to avoid being banned by Gentoo.org on suspicion of DDoS-ing
 - Add error handling for the entire script; preferably in a way that handles anything inside of the chroot function with a message of where the error was and a redirect to the repo's issue page
 - Split the install-script into smaller functions and sub-scripts

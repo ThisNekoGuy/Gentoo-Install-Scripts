@@ -107,6 +107,7 @@ LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch n
 ## changing all of the "nvme0n1" references to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
 ## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
 
+## This fails with a too many arguments error
 if test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)"  && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)" && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
   BOOT_PARTITION=/dev/nvme0n1p1
   SWAP_PARTITION=/dev/nvme0n1p2
@@ -1251,6 +1252,7 @@ URL[\$e]=https://github.com/frogging-family/wine-tkg-git
 EOF
   fi
   
+  ## This fails with a too many arguments error
   if [ -x "$(command echo "${LATE_PACKAGES}" | grep doas 2>/dev/null)" ] || [ -x "$(command echo "${TOOLS}" | grep doas 2>/dev/null)" ]; then
     message "Configuring /etc/doas.conf"
     cat << EOF > /etc/doas.conf
@@ -1265,6 +1267,7 @@ EOF
 EOF
   fi
   
+  ## This fails with a too many arguments error
   if [ -x "$(command echo "${LATE_PACKAGES}" | grep sudo 2>/dev/null)"  ] || [ -x "$(command echo "${TOOLS}" | grep sudo 2>/dev/null)" ] || [ -x "$(command ls /usr/bin | grep sudo 1>/dev/null)" ]; then
     message "Configuring /etc/sudoers"
     sed -i "s/# %wheel ALL=(ALL:ALL)/%wheel ALL=(ALL:ALL)/" /etc/sudoers
@@ -1342,11 +1345,11 @@ if [ -n "\${DISPLAY}" ] && [ -f /usr/bin/ksshaskpass ]; then
 fi
 
 ## Sets the system editor(s)
-if [ -n "\${DISPLAY}" ] && test -x "\$(command -v kate > /dev/null 2>&1)"; then
+if [ -n "\${DISPLAY}" ] && [ -x "\$(command -v kate > /dev/null 2>&1)" ]; then
     export EDITOR=/usr/bin/kate
-elif [ -n "\${DISPLAY}" ] && test -x "\$(command -v code > /dev/null 2>&1)"; then
+elif [ -n "\${DISPLAY}" ] && [ -x "\$(command -v code > /dev/null 2>&1)" ]; then
     export EDITOR=/usr/bin/code
-elif test -x "\$(command -v nano > /dev/null 2>&1)"; then 
+elif [ -x "\$(command -v nano > /dev/null 2>&1)" ]; then 
     export EDITOR=/usr/bin/nano;
 fi
 
@@ -1360,7 +1363,7 @@ alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db
 
 
 ## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
-if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1); then
+if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && \${QT_QPA_PLATFORM} == "xcb"; then
     export KWIN_TRIPLE_BUFFER=1
     #export KWIN_OPENGL_INTERFACE=egl
 fi
