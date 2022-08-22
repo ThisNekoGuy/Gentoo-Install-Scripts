@@ -84,16 +84,58 @@ IS_SSD=true # Change to false if the target device is not an SSD drive
 IS_NVME=true # Change to false if the target device is not an NVME drive
 
 ### These are the main values that need reviewed for installation; though, you can add post-install packages to 'LATE_PACKAGES' further below
-USE_KERNEL_CONFIG=false
-INSTALL_INTEL_DRIVER=false ## Use if your Intel CPU has an iGPU (most Intel CPUs have this; you'll probably already know if it doesn't, but if you don't look up your CPU name)
-INSTALL_NVIDIA_DRIVER=true ## Use this if you want to use the Nvidia proprietary driver - the "open modules" option below doesn't require this to be enabled
-INSTALL_NVIDIA_OPEN_GPU_MODULES=false ## Use this if you have an RTX or newer card and aren't afraid to report bugs to improve driver support: https://github.com/NVIDIA/open-gpu-kernel-modules
-INSTALL_NOUVEAU_DRIVER=false ## Use this if you either have a really old Nvidia card that the official drivers don't support or intend to contribute to the Nouveau project
-USE_RADEON=false ## Use this if you either have an AMD APU (AMD CPU with an iGPU) or an AMD GPU
-USED_VIDEO_CARDS="" ## Don't touch this!
-INSTALL_GAME_EMULATORS=true ## Use this if you like to play retro games :)
-## The value below attempts to build the entire system via the Clang LLVM compiler; this would only be applicable much later, but does lengthen installation time
-MAKE_CLANG_DEFAULT_COMPILER=false
+USE_KERNEL_CONFIG=$(read -n 1 -r -p "Use your own kernel .config file? - (y/n): ")
+if [ "${USE_KERNEL_CONFIG}" != n ]; then
+  USE_KERNEL_CONFIG=true
+else
+  USE_KERNEL_CONFIG=false
+fi
+
+# Use if your Intel CPU has an iGPU (most Intel CPUs have this; you'll probably already know if it doesn't, but if you don't look up your CPU name)
+INSTALL_INTEL_DRIVER=$(read -n 1 -r -p "Do you use an Intel CPU? - (y/n): ")
+if [ "${INSTALL_INTEL_DRIVER}" != n ]; then
+  INSTALL_INTEL_DRIVER=true
+else
+  INSTALL_INTEL_DRIVER=false
+fi
+
+USE_NVIDIA=$(read -n 1 -r -p "Do you use an Nvidia GPU? - (y/n): ")
+if  [ "${USE_NVIDIA}" != "n" ]; then
+  # Use this if you want to use the Nvidia proprietary driver - the "open modules" option below doesn't require this to be enabled
+  INSTALL_NVIDIA_DRIVER=$(read -n 1 -r -p "Do you use an Nvidia GPU and wish to use the official driver? - (y/n): ")
+  if [ "${INSTALL_NVIDIA_DRIVER}" != "n" ]; then
+    INSTALL_NVIDIA_DRIVER=true
+    
+    # Use this if you have an RTX or newer card and aren't afraid to report bugs to improve driver support: https://github.com/NVIDIA/open-gpu-kernel-modules
+    INSTALL_NVIDIA_OPEN_GPU_MODULES=$(read -n 1 -r -p "Use the open-source kernel modules (not the nouveau driver)? Requires RTX or newer. - (y/n): ")
+    if [ "${INSTALL_NVIDIA_OPEN_GPU_MODULES}" != "n" ]; then
+      INSTALL_NVIDIA_OPEN_GPU_MODULES=true
+    else
+      INSTALL_NVIDIA_OPEN_GPU_MODULES=false
+    fi
+    
+  else
+    INSTALL_NVIDIA_DRIVER=false
+    
+    # Use this if you either have a really old Nvidia card that the official drivers don't support or intend to contribute to the Nouveau project
+    INSTALL_NOUVEAU_DRIVER=$(read -n 1 -r -p "Do you use an Nvidia GPU and wish to use the FOSS driver? Support for this driver is limited. - (y/n): ")
+    if [ "${INSTALL_NOUVEAU_DRIVER}" != "n" ]; then
+      INSTALL_NOUVEAU_DRIVER=true
+    else
+      INSTALL_NOUVEAU_DRIVER=false
+    fi
+  fi
+fi
+
+# Use this if you either have an AMD GPU or AMD APU (AMD CPU with an iGPU)
+USE_RADEON=$(read -n 1 -r -p "Do you use an AMD GPU or APU/iGPU? - (y/n): ")
+if [ "${USE_RADEON}" != "n" ]; then
+  USE_RADEON=true
+else
+  USE_RADEON=false
+fi
+
+USED_VIDEO_CARDS="" ## Don't touch this!! This value is for the installer.
 
 
 ## DO NOT add desktop environments to this list (if you know bash), only personal applications. (I set an example here: keep, add, or remove as desired.)
@@ -107,28 +149,26 @@ LATE_PACKAGES="app-shells/fish dev-util/rustup net-misc/croc app-misc/neofetch n
 ## changing all of the "nvme0n1" references to a different NVME drive or by setting "IS_NVME", above, to false if you don't want to install to an available NVME drive.
 ## Similarly, this can be done for the middle "else" check to do the same for SATA SSDs
 
-## This fails with a too many arguments error
-# if test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)"  && [ ${IS_SSD} != false ] && [ ${IS_NVME} != false ] || test -x "$(command lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1)" && [ ${IS_SSD} != true ] && [ ${IS_NVME} != false ]; then ## Written this way as error handling
-#   BOOT_PARTITION=/dev/nvme0n1p1
-#   SWAP_PARTITION=/dev/nvme0n1p2
-#   ROOT_PARTITION=/dev/nvme0n1p3
-# elif [ ${IS_SSD} != false ]; then
-#   BOOT_PARTITION=/dev/sda1
-#   SWAP_PARTITION=/dev/sda2
-#   ROOT_PARTITION=/dev/sda3
-# else
-#   BOOT_PARTITION=/dev/sda1
-#   SWAP_PARTITION=/dev/sda2
-#   ROOT_PARTITION=/dev/sda3
-# fi
 
-echo "There's a problem with this script at the moment; please wait until the above type of issue is resolved."
-return 1
+if lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1 && ${IS_SSD} != false && ${IS_NVME} != false || lsblk | grep -w '^nvme0n1' | cut -f3 | cut -d ' ' -f 1 > /dev/null 2>&1 && ${IS_SSD} != true && ${IS_NVME} != false; then ## Written this way as error handling
+  BOOT_PARTITION=/dev/nvme0n1p1
+  SWAP_PARTITION=/dev/nvme0n1p2
+  ROOT_PARTITION=/dev/nvme0n1p3
+elif ${IS_SSD} != false; then
+  BOOT_PARTITION=/dev/sda1
+  SWAP_PARTITION=/dev/sda2
+  ROOT_PARTITION=/dev/sda3
+else
+  BOOT_PARTITION=/dev/sda1
+  SWAP_PARTITION=/dev/sda2
+  ROOT_PARTITION=/dev/sda3
+fi
+
 
 ## This script only supports BTRFS right now; feel free to make a PR for other options in addition to BTRFS if you know bash
 ROOT_FS_TYPE=btrfs
 
-STAGE3=stage3/stage3*
+STAGE3="stage3/stage3$*"
 KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo # kernel config file is optimized for my particular system; you will have to modify it for your system
 
 HOSTNAME="GENTOO"
@@ -193,18 +233,28 @@ case "${GENTOO_DESKTOP}" in
   INSTALL_KDE_PLASMA=$(command read -n 1 -r -p "Install KDE Plasma? (y/n): ")
   if [ "${INSTALL_KDE_PLASMA}" != "n" ]; then
     USE_FLAGS+=" colord crash-handler display-manager firewall gtk kde legacy-systray networkmanager qt5 sddm semantic-desktop smart telemetry -discover -gnome -kwallet -qt4 -wallpapers"
-  
-  INSTALL_WINE=$(read -n 1 -r -p "Install Wine? (https://wiki.gentoo.org/wiki/Wine) - (y/n): ")
-  if [ "${INSTALL_WINE}" != "n" ]; then
-    message "Adding Wine packages to LATE_PACKAGES"
-    LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common"
   fi
   
-  INSTALL_STEAM=$(read -n 1 -r -p "Install Steam? (https://wiki.gentoo.org/wiki/Steam) - (y/n): ")
-  if [ "${INSTALL_STEAM}" != "n" ]; then
-    message "Enabling Steam for installation later"
+  if [ "${GET_ARCH}" == x86_64 ]; then
+    
+    INSTALL_WINE=$(read -n 1 -r -p "Install Wine? (https://wiki.gentoo.org/wiki/Wine) - (y/n): ")
+    if [ "${INSTALL_WINE}" != "n" ]; then
+      message "Adding Wine packages to LATE_PACKAGES"
+      LATE_PACKAGES+=" app-emulation/wine-vanilla app-emulation/wine-gecko app-emulation/wine-mono app-emulation/winetricks app-emulation/wine-desktop-common"
+    fi
+    
+    INSTALL_STEAM=$(read -n 1 -r -p "Install Steam? (https://wiki.gentoo.org/wiki/Steam) - (y/n): ")
+    if [ "${INSTALL_STEAM}" != "n" ] && [ "${GET_ARCH}" == x86_64 ]; then
+      message "Enabling Steam for installation later"
+    fi
+    
   fi
-
+  
+  INSTALL_GAME_EMULATORS=$(read -n 1 -r -p "Install game emulators?- (y/n): ") ## Use this if you like to play retro games :)
+  if [ "${INSTALL_GAME_EMULATORS}" != "n" ]; then
+    message "Adding game emulators to be installed later."
+  fi
+  
   INSTALL_FLATPAK=$(read -n 1 -r -p "Install flatpak? (https://wiki.gentoo.org/wiki/Flatpak) - (y/n): ")
   if [ "${INSTALL_FLATPAK}" != "n" ]; then
     message "Adding flatpak packages to LATE_PACKAGES"
@@ -212,7 +262,7 @@ case "${GENTOO_DESKTOP}" in
   fi
   ;;
   "n")
-  message "Using a minimal configuration"
+  message "Using a non-desktop configuration"
   ;;
   *)
   ## I want to use case switches instead of these if-checks but I need proper error handling implementation first to avoid breaking the script in the event a user mistake is made
@@ -221,6 +271,16 @@ case "${GENTOO_DESKTOP}" in
   ;;
 esac
 
+
+message "The value below attempts to build the entire system via the Clang LLVM compiler;"
+message "this would only be applicable much later, but does lengthen installation time."
+MAKE_CLANG_DEFAULT_COMPILER=$(read -n 1 -r -p "Make Clang the default compiler? - (y/n): ")
+if [ "${MAKE_CLANG_DEFAULT_COMPILER}" != "n" ]; then
+  MAKE_CLANG_DEFAULT_COMPILER=true
+  message "Set Clang as the default compiler."
+else
+  MAKE_CLANG_DEFAULT_COMPILER=false
+  message "Set GCC as the default compiler."
 fi
 
 INSTALL_DOAS=$(read -n 1 -r -p "Install doas? (It's a smaller sudo replacement semi-ported from BSD-land) - (y/n): ")
@@ -286,7 +346,7 @@ install_gentoo_prep ()
   message "Extracting stage3 tarball"
   command tar --numeric-owner --xattrs xvjpf "${STAGE3}" -C "${MOUNT_LOCATION}"
   command rm "${STAGE3}"
-  command cd "${MOUNT_LOCATION}"
+  command cd "${MOUNT_LOCATION}" || return
 
   message "Copying configuration files"
   command mkdir -pv "${MOUNT_LOCATION}/etc"
@@ -880,7 +940,7 @@ EOF
   fi  
 
   message "Cleaning Kernel source folder"
-  command cd /usr/src/linux/
+  command cd /usr/src/linux/ || return
   command make clean
   command make mrproper
   
@@ -965,7 +1025,7 @@ EOF
   message "Installing netifrc"
   command ${EMERGE} --noreplace net-misc/netifrc
   message "Setting network interfaces to activate at boot"
-  command cd /etc/init.d
+  command cd /etc/init.d || return
   command ln -s net.lo net.eth0
   # command ln -s net.lo net.wlo0 # Not sure how to set up wireless properly yet
   command rc-update add net.eth0 default
@@ -1366,9 +1426,30 @@ alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db
 
 
 ## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
-if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && \${QT_QPA_PLATFORM} == "xcb"; then
+if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && \${XDG_SESSION_TYPE} == x11 && \${QT_QPA_PLATFORM} == "xcb"; then
     export KWIN_TRIPLE_BUFFER=1
-    #export KWIN_OPENGL_INTERFACE=egl
+fi
+
+## Handles Wayland environment variables -- Probably needs to be adapted for OpenRC, as I'm not familiar enough with it
+if [ -x "\$(command -v loginctl > /dev/null 2>&1)" ] && [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
+  if loginctl show-session "\$(loginctl | grep \$(whoami) | awk '{print \$1}')" -p Type | sed 's/Type=//g' != "x11"; then
+  
+    ## egl for older Nvidia versions
+    if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
+        if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version * \://' > /dev/null 2>&1 -lt "495.44"; then
+            export KWIN_OPENGL_INTERFACE="egl"
+            export QT_QPA_PLATFORM="wayland-egl,xcb"
+            export KWIN_DRM_USE_EGL_STREAMS=1
+        fi
+    else ## for newer Nvidia versions and non-Nvidia
+        export QT_QPA_PLATFORM="wayland,xcb"
+    fi
+      
+  elif loginctl show-session "\$(loginctl | grep \$(whoami) | awk '{print \$1}')" -p Type | sed 's/Type=//g' == "x11"; then
+      
+      export QT_QPA_PLATFORM="xcb"
+      
+  fi
 fi
 
 ## Fix Java 8's lack of HiDPI nonsense
@@ -1494,7 +1575,7 @@ EOF
     command ${EMERGE} media-plugins/nvidia-vaapi-driver
   fi
 
-  if [ ${INSTALL_GAME_EMULATORS} == true ]; then
+  if [ "${INSTALL_GAME_EMULATORS}" == true ]; then
     message "Installing some emulators and a ROM patching utility"
     command ${EMERGE} --keep-going games-emulation/mgba games-emulation/dolphin games-emulation/xemu games-emulation/pcsx2 games-emulation/rpcs3 dev-util/flips
     Message "If Switch emulators are desired, choose either yuzu or ryujinx from /etc/portage/package.unmask/tatsh-overlay"
