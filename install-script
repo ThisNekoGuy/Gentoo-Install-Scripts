@@ -1430,24 +1430,32 @@ if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kw
     export KWIN_TRIPLE_BUFFER=1
 fi
 
-## Handles Wayland environment variables -- Probably needs to be adapted for OpenRC, as I'm not familiar enough with it
-if [ -x "\$(command -v loginctl > /dev/null 2>&1)" ] && [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
-  if loginctl show-session "\$(loginctl | grep \$(whoami) | awk '{print \$1}')" -p Type | sed 's/Type=//g' != "x11"; then
+## Handles Wayland environment variables
+if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
+  if "\$(XDG_SESSION_TYPE)" != "x11"; then
   
     ## egl for older Nvidia versions
     if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
         if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version * \://' > /dev/null 2>&1 -lt "495.44"; then
             export KWIN_OPENGL_INTERFACE="egl"
-            export QT_QPA_PLATFORM="wayland-egl,xcb"
+            export QT_QPA_PLATFORM="wayland-egl;xcb"
             export KWIN_DRM_USE_EGL_STREAMS=1
         fi
-    else ## for newer Nvidia versions and non-Nvidia
-        export QT_QPA_PLATFORM="wayland,xcb"
+    else
+        ## for newer Nvidia versions and non-Nvidia
+        export QT_QPA_PLATFORM="wayland;xcb"
     fi
+    
+    export CLUTTER_BACKEND=wayland
+    export SDL_VIDEODRIVER=wayland
       
-  elif loginctl show-session "\$(loginctl | grep \$(whoami) | awk '{print \$1}')" -p Type | sed 's/Type=//g' == "x11"; then
+  elif "\$(XDG_SESSION_TYPE)" == "x11"; then
       
+      ## Setting these for reference in case someone needs to know the relevant values for these GUIs for use with Xwayland
       export QT_QPA_PLATFORM="xcb"
+      export SDL_VIDEODRIVER=x11
+      export GDK_BACKEND=x11
+      export WINIT_UNIX_BACKEND=x11
       
   fi
 fi
