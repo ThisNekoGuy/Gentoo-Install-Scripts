@@ -1420,7 +1420,7 @@ if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
     
       ## egl for older Nvidia versions
       if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
-          if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version * \://' > /dev/null 2>&1 -lt "495.44"; then
+          if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version * \://' | sed 's/ //' > /dev/null 2>&1 -lt "495.44"; then
               export KWIN_OPENGL_INTERFACE="egl"
               export QT_QPA_PLATFORM="wayland-egl;xcb"
               export KWIN_DRM_USE_EGL_STREAMS=1
