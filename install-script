@@ -1369,17 +1369,6 @@ export PBA_ENABLE=1
 
 ## Enables DrKonqi for all program crashes
 export KDE_COREDUMP_NOTIFY=1
-
-## Kwin compositing render setting
-#    O: OpenGL backend (either OpenGL 1, OpenGL 2 or OpenGL ES 2.0)
-#    O1: OpenGL 1 backend (only 4.x)
-#    O2: OpenGL 2 backend
-#    O2ES: OpenGL ES 2 backend (since 5.5)
-#    X: XRender backend (only X11)
-#    Q: QPainter backend (only Wayland)
-#    N: No Compositing (only X11)
-
-export KWIN_COMPOSE=O2
 EOF
   
   message "Adding a user configuration script to /etc/env.d/user-configs.sh"
@@ -1394,7 +1383,7 @@ alias emerchu="emerge"
 alias buildProfiles="ls /etc/portage/env/ | grep compiler"
 
 ## Update shortcut
-alias update="emerge -uDNav @world"
+alias update="emerge -uavDN @world"
 
 ## Shortcut for rebuilding the grub configuration
 alias grubRebuild="grub-mkconfig -o /boot/grub/grub.cfg"
@@ -1426,41 +1415,56 @@ alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db
 
 
 ## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
-if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && \${XDG_SESSION_TYPE} == x11 && \${QT_QPA_PLATFORM} == "xcb"; then
+if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && "\${XDG_SESSION_TYPE}" = "x11" && "\${QT_QPA_PLATFORM}" = "xcb"; then
     export KWIN_TRIPLE_BUFFER=1
 fi
 
 ## Handles Wayland environment variables
 if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
-  if "\$(XDG_SESSION_TYPE)" != "x11"; then
-  
-    ## egl for older Nvidia versions
-    if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
-        if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version * \://' > /dev/null 2>&1 -lt "495.44"; then
-            export KWIN_OPENGL_INTERFACE="egl"
-            export QT_QPA_PLATFORM="wayland-egl;xcb"
-            export KWIN_DRM_USE_EGL_STREAMS=1
-        fi
-    else
-        ## for newer Nvidia versions and non-Nvidia
-        export QT_QPA_PLATFORM="wayland;xcb"
-    fi
+    if "\$(XDG_SESSION_TYPE)" = "wayland"; then
     
-    export CLUTTER_BACKEND=wayland
-    export SDL_VIDEODRIVER=wayland
+      ## egl for older Nvidia versions
+      if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
+          if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version * \://' > /dev/null 2>&1 -lt "495.44"; then
+              export KWIN_OPENGL_INTERFACE="egl"
+              export QT_QPA_PLATFORM="wayland-egl;xcb"
+              export KWIN_DRM_USE_EGL_STREAMS=1
+          fi
+      else
+          ## for newer Nvidia versions and non-Nvidia
+          export QT_QPA_PLATFORM="wayland;xcb"
+      fi
       
-  elif "\$(XDG_SESSION_TYPE)" == "x11"; then
-      
-      ## Setting these for reference in case someone needs to know the relevant values for these GUIs for use with Xwayland
-      export QT_QPA_PLATFORM="xcb"
-      export SDL_VIDEODRIVER=x11
-      export GDK_BACKEND=x11
-      export WINIT_UNIX_BACKEND=x11
-      
-  fi
+      export CLUTTER_BACKEND=wayland
+      export SDL_VIDEODRIVER=wayland
+        
+    elif [ "\$(XDG_SESSION_TYPE)" == "x11" ]; then
+        
+        ## Setting these for reference in case someone needs to know the relevant values for these GUIs for use with Xwayland
+        export QT_QPA_PLATFORM="xcb"
+        export SDL_VIDEODRIVER=x11
+        export GDK_BACKEND=x11
+        export WINIT_UNIX_BACKEND=x11
+        
+    fi
 fi
 
-## Fix Java 8's lack of HiDPI nonsense
+## Kwin compositing render setting
+#    O: OpenGL backend (either OpenGL 1, OpenGL 2 or OpenGL ES 2.0)
+#    O1: OpenGL 1 backend (only 4.x)
+#    O2: OpenGL 2 backend
+#    O2ES: OpenGL ES 2 backend (since 5.5)
+#    X: XRender backend (only X11)
+#    Q: QPainter backend (only Wayland)
+#    N: No Compositing (only X11)
+
+if [ "\$(XDG_SESSION_TYPE)" == "x11" ]; then
+    export KWIN_COMPOSE=O2
+elif [ "\$(XDG_SESSION_TYPE)" == "wayland" ]; then
+    export KWIN_COMPOSE=QPainter
+fi
+
+## Fix Java 8's lack of HiDPI nonsense; not guaranteed
 if [ "\${XDG_CURRENT_DESKTOP}" == "KDE" ]; then
     export _JAVA_AWT_WM_NONREPARENTING=1;
 else
