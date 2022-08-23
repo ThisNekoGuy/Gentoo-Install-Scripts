@@ -1414,11 +1414,6 @@ fi
 alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/temp-overlay/temp-category/skel.ebuild; cd /var/db/repos/temp-overlay/temp-category/; xdg-open /var/db/repos/gentoo/skel.ebuild"
 
 
-## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
-if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && "\${XDG_SESSION_TYPE}" = "x11" && "\${QT_QPA_PLATFORM}" = "xcb"; then
-    export KWIN_TRIPLE_BUFFER=1
-fi
-
 ## Handles Wayland environment variables
 if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
     if "\$(XDG_SESSION_TYPE)" = "wayland"; then
@@ -1447,6 +1442,11 @@ if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
         export WINIT_UNIX_BACKEND=x11
         
     fi
+fi
+
+## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
+if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && "\${XDG_SESSION_TYPE}" = "x11" && "\${QT_QPA_PLATFORM}" = "xcb"; then
+    export KWIN_TRIPLE_BUFFER=1
 fi
 
 ## Kwin compositing render setting
