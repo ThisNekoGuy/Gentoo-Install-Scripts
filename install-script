@@ -1416,11 +1416,11 @@ alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db
 
 ## Handles Wayland environment variables
 if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
-    if "\$(XDG_SESSION_TYPE)" = "wayland"; then
+    if "\${XDG_SESSION_TYPE}" = "wayland"; then
     
       ## egl for older Nvidia versions
       if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
-          if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version * \://' | sed 's/ //' > /dev/null 2>&1 -lt "495.44"; then
+          if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version *: //' -lt "495.44"; then
               export KWIN_OPENGL_INTERFACE="egl"
               export QT_QPA_PLATFORM="wayland-egl;xcb"
               export KWIN_DRM_USE_EGL_STREAMS=1
@@ -1433,7 +1433,7 @@ if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
       export CLUTTER_BACKEND=wayland
       export SDL_VIDEODRIVER=wayland
         
-    elif [ "\$(XDG_SESSION_TYPE)" == "x11" ]; then
+    elif [ "\${XDG_SESSION_TYPE}" == "x11" ]; then
         
         ## Setting these for reference in case someone needs to know the relevant values for these GUIs for use with Xwayland
         export QT_QPA_PLATFORM="xcb"
@@ -1458,9 +1458,9 @@ fi
 #    Q: QPainter backend (only Wayland)
 #    N: No Compositing (only X11)
 
-if [ "\$(XDG_SESSION_TYPE)" == "x11" ]; then
+if [ "\${XDG_SESSION_TYPE}" == "x11" ]; then
     export KWIN_COMPOSE=O2
-elif [ "\$(XDG_SESSION_TYPE)" == "wayland" ]; then
+elif [ "\${XDG_SESSION_TYPE}" == "wayland" ]; then
     export KWIN_COMPOSE=QPainter
 fi
 
