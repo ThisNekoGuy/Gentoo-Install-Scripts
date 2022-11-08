@@ -629,7 +629,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/lld-link"
+LD="/usr/bin/ld.lld"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -642,7 +642,7 @@ _HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protect
 CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -672,7 +672,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/lld-link"
+LD="/usr/bin/ld.lld"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -685,7 +685,7 @@ _HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protect
 CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -715,7 +715,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/lld-link"
+LD="/usr/bin/ld.lld"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -728,7 +728,7 @@ _HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protect
 CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -760,7 +760,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/lld-link"
+LD="/usr/bin/ld.lld"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -774,7 +774,7 @@ _CLFAGS="\${_CFLAGS/-O3/}" ## Wine is faster with -O2
 CFLAGS="\${_CFLAGS} -O2 -std=gnu89"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O2,--sort-common,--as-needed" ## mingw can't use relro
+LDFLAGS="-lpthread -fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O2,--sort-common,--as-needed" ## mingw can't use relro
 CROSSCFLAGS="\${CFLAGS}"
 CROSSCXXFLAGS="\${CXXFLAGS}"
 CROSSLDFLAGS="\${LDFLAGS}"
@@ -807,7 +807,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/lld-link"
+LD="/usr/bin/ld.lld"
 AR="llvm-ar"
 NM="llvm-nm"
 AS="llvm-as"
@@ -818,7 +818,7 @@ _HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protect
 CFLAGS="${CFLAGS} -flto=thin \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -849,7 +849,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/lld-link"
+LD="/usr/bin/ld.lld"
 AR="llvm-ar"
 NM="llvm-nm"
 AS="llvm-as"
@@ -860,7 +860,7 @@ _HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protect
 CFLAGS="${CFLAGS} -flto=thin \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
