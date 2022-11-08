@@ -3,6 +3,16 @@
 
 GET_ARCH="$(lscpu | grep -w '^Architecture' | sed 's/\s\s*/ /g' | cut -d ' ' -f 1 --complement | cut -d ' ' -f 1 -z)"
 
+if [ $(nproc) -eq 16 ] || [ $(nproc) -gt 16 ]; then
+  _PARALLEL_THREADS="\$((\$(nproc)+1))"
+elif [ $(nproc) -gt 4 ]; then
+  _PARALLEL_THREADS="\$((\$(nproc)-4))"
+elif [ $(nproc) -eq 4 ]; then
+  _PARALLEL_THREADS="\$((\$(nproc)-2))"
+elif [ $(nproc) -eq 2 ]; then
+  _PARALLEL_THREADS="\$((\$(nproc)-1))"
+fi
+
 case "${GET_ARCH}" in
   x86_64)
   ;;
@@ -50,7 +60,10 @@ if [ ${AUTODETECT_CPU_ARCH} != false ]; then
   echo "Setting CPU architecture"
   CPU_ARCH="$(gcc -march=native -Q --help=target | grep -- '-march=' | cut -f3 | cut -d ' ' -f 1 -z)"
 fi
-CFLAGS="-march=${CPU_ARCH} -mtune-${CPU_ARCH} -O3 -pipe -fno-plt"
+CFLAGS="-march=${CPU_ARCH} -mtune-${CPU_ARCH} -O3 -pipe -fno-plt -pthread -fsanitize=bounds,alignment,object-size -fsanitize-undefined-trap-on-error \
+        -fvisibility=hidden -fexceptions -Wformat -Werror=format-security \
+        -Wvla -Wimplicit-fallthrough -Wno-unused-result -Wno-unneeded-internal-declaration -Warray-bounds"
+
 # We want the CPU_FLAGS given by "cpuid2cpuflags" - this implementation only supports x86/x86_64 right now
 if [ ${AUTODETECT_CPU_FLAGS} != false ]; then
   echo "Installing cpuid2cpuflags"
@@ -78,7 +91,7 @@ fi
 
 ## Not entirely sure how enabling "32", "x32", "abi_x86_32" works; my lack of understanding about that may either cause Wine build errors or needlessly installed 32-bit libraries
 USE_FLAGS="a52 aac acpi branding cairo cdr dbus dri dts dvd dvdr encode exif flac gif gpm gui icu jpeg lcms libnotify mad mng mp3 mp4 mpeg ogg pdf png ppds spell startup-notification svg tiff truetype vorbis udev udisks unicode upower usb wxwidgets x264 xml xv xvid X xcb wayland acl bindist mmx sse sse2 initramfs redistributable elogind -suid -selinux xattr clang desktop-portal accessibility crypt bluetooth browser-integration sna pulseaudio pipewire pipewire-alsa policykit sysv-utils netifrc ncurses audit pam -systemd -test -examples layers vulkan opencl discord-presence mgba autotype browser keeshare network introspection zip steamruntime en-US d3d9 gles1 gles2 llvm lm-sensors opencl osmesa valgrind xa xvmc zink 64 32 x32 unwind vaapi zstd dist-kernel symlink fonts seccomp"
-MAKE_OPTIONS="-j\$((\$(nproc)+1))"
+MAKE_OPTIONS="-j${_PARALLEL_THREADS}"
 
 IS_SSD=true # Change to false if the target device is not an SSD drive
 IS_NVME=true # Change to false if the target device is not an NVME drive
@@ -426,10 +439,11 @@ CXX="g++"
 AR="ar"
 NM="nm"
 RANLIB="ranlib"
-CFLAGS="${CFLAGS}"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -438,7 +452,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -460,10 +474,11 @@ CXX="g++"
 AR="ar"
 NM="nm"
 RANLIB="ranlib"
-CFLAGS="${CFLAGS}"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -472,7 +487,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -488,10 +503,11 @@ CXX="g++"
 AR="ar"
 NM="nm"
 RANLIB="ranlib"
-CFLAGS="${CFLAGS}"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -500,7 +516,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} static-libs tools"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -522,7 +538,7 @@ _CLFAGS="\${_CFLAGS/-O3/}" ## Wine is faster with -O2
 CFLAGS="\${_CFLAGS} -O2"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-Wl,-O3,--sort-common,--as-needed" ## mingw can't use relro
+LDFLAGS="-lpthread -Wl,-O3,--sort-common,--as-needed" ## mingw can't use relro
 CROSSCFLAGS="\${CFLAGS}"
 CROSSCXXFLAGS="\${CXXFLAGS}"
 CROSSLDFLAGS="\${LDFLAGS}"
@@ -534,7 +550,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads unwind xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -550,10 +566,11 @@ CXX="g++"
 AR="gcc-ar"
 NM="gcc-nm"
 RANLIB="gcc-ranlib"
-CFLAGS="${CFLAGS} -flto=thin"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-flto -fuse-linker-plugin -lpthread -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -562,7 +579,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -578,10 +595,11 @@ CXX="g++"
 AR="gcc-ar"
 NM="gcc-nm"
 RANLIB="gcc-ranlib"
-CFLAGS="${CFLAGS} -flto=thin"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
+CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-flto -fuse-linker-plugin -lpthread -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -590,7 +608,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS}"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -611,7 +629,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/ld.lld"
+LD="/usr/bin/lld-link"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -620,11 +638,11 @@ RANLIB=""
 ###
 STRIP="llvm-strip"
 OBJCOPY="llvm-objcopy"
-_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
 CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -633,7 +651,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} libcxxabi libunwind"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -654,7 +672,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/ld.lld"
+LD="/usr/bin/lld-link"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -663,11 +681,11 @@ RANLIB=""
 ###
 STRIP="llvm-strip"
 OBJCOPY="llvm-objcopy"
-_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
 CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -676,7 +694,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} libcxxabi libunwind"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -697,7 +715,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/ld.lld"
+LD="/usr/bin/lld-link"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -706,11 +724,11 @@ RANLIB=""
 ###
 STRIP="llvm-strip"
 OBJCOPY="llvm-objcopy"
-_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
 CFLAGS="${CFLAGS} \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -719,7 +737,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} static-libs tools libcxxabi libunwind"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -742,7 +760,7 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/ld.lld"
+LD="/usr/bin/lld-link"
 AS="llvm-as"
 ### Ignore these three for non-LTO builds:
 AR=""
@@ -756,7 +774,7 @@ _CLFAGS="\${_CFLAGS/-O3/}" ## Wine is faster with -O2
 CFLAGS="\${_CFLAGS} -O2 -std=gnu89"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O2,--sort-common,--as-needed" ## mingw can't use relro
+LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O2,--sort-common,--as-needed" ## mingw can't use relro
 CROSSCFLAGS="\${CFLAGS}"
 CROSSCXXFLAGS="\${CXXFLAGS}"
 CROSSLDFLAGS="\${LDFLAGS}"
@@ -768,7 +786,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} capi cups fontconfig gecko gstreamer mono mp3 netapi nls odbc openal opengl osmesa oss pcap perl realtime run-exes samba scanner sdl ssl threads unwind xcomposite xinerama abi_x86_64 abi_x86_32 -custom-cflags -mingw -crossdev-mingw libcxxabi libunwind"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -789,18 +807,18 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/ld.lld"
+LD="/usr/bin/lld-link"
 AR="llvm-ar"
 NM="llvm-nm"
 AS="llvm-as"
 RANLIB="llvm-ranlib"
 STRIP="llvm-strip"
 OBJCOPY="llvm-objcopy"
-_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
 CFLAGS="${CFLAGS} -flto=thin \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -809,7 +827,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} libcxxabi libunwind"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -831,18 +849,18 @@ EOF
 CC="clang"
 CXX="clang++"
 OBJC=clang
-LD="/usr/bin/ld.lld"
+LD="/usr/bin/lld-link"
 AR="llvm-ar"
 NM="llvm-nm"
 AS="llvm-as"
 RANLIB="llvm-ranlib"
 STRIP="llvm-strip"
 OBJCOPY="llvm-objcopy"
-_HARDENING_FLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2"
+_HARDENING_FLAGS="-fstack-clash-protection -fstack-protector-strong -fcf-protection -Wp,-D_FORTIFY_SOURCE=2"
 CFLAGS="${CFLAGS} -flto=thin \${_HARDENING_FLAGS}"
 CXXFLAGS="\${CFLAGS}"
 RUSTFLAGS="-C opt-level=3 -C target-cpu=native"
-LDFLAGS="-fuse-ld=lld -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
+LDFLAGS="-lpthread -rtlib=compiler-rt -unwindlib=libunwind -static -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now"
 CPU_FLAGS="${CPU_FLAGS}"
 
 # WARNING: Changing your CHOST is not something that should be done lightly.
@@ -851,7 +869,7 @@ CHOST="x86_64-pc-linux-gnu"
 # These are the USE flags that were used in addition to what is provided by the
 # profile used for building.
 USE="${USE_FLAGS} libcxxabi libunwind"
-MAKEOPTS="-j\$((\$(nproc)+1))"
+MAKEOPTS="-j${_PARALLEL_THREADS}"
 PORTDIR="/usr/portage"
 DISTDIR="${PORTDIR}/distfiles"
 PKGDIR="${PORTDIR}/packages"
@@ -1053,9 +1071,11 @@ EOF
   ## Not sure if installing them manually like this is necessary given the likes of tasks like Steam, where you obviously can't compile drivers into pre-built binaries...?
   ## Might just be my non-Gentoo thinking getting in the way
   if [ ${INSTALL_NVIDIA_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+    ## Needs to be updated to compile Optimus instead of Bumblebee but it's not available in the official repo(s)
     message "Installing Nvidia driver with hybrid GPU support"
     command ${EMERGE} x11-drivers/nvidia-drivers x11-misc/bumblebee
   elif [ ${INSTALL_NOUVEAU_DRIVER} != false ] && [ ${INSTALL_INTEL_DRIVER} != false ]; then
+    ## Needs to be updated to compile Optimus instead of Bumblebee but it's not available in the official repo(s)
     message "Installing Nouveau driver with hybrid GPU support"
     command ${EMERGE} x11-drivers/xf86-video-nouveau x11-misc/bumblebee
   elif [ ${INSTALL_NVIDIA_DRIVER} != false ] || [ ${INSTALL_NVIDIA_OPEN_GPU_MODULES} != false ]; then
@@ -1396,57 +1416,94 @@ if [ -n "\${DISPLAY}" ] && [ -f /usr/bin/ksshaskpass ]; then
     export SSH_ASKPASS='/usr/bin/ksshaskpass'
 fi
 
+## Set SSH storage requests to Kwallet
+if [ -n "\${DISPLAY/:/}" ] && [ -f /usr/bin/ksshaskpass ]; then 
+    export SSH_ASKPASS='/usr/bin/ksshaskpass'
+fi
+
 ## Sets the system editor(s)
-if [ -n "\${DISPLAY}" ] && [ -x "\$(command -v kate > /dev/null 2>&1)" ]; then
+if [ -n "\${DISPLAY/:/}" ] && [ -x "\$(command -v kate > /dev/null 2>&1)" ]; then
     export EDITOR=/usr/bin/kate
-elif [ -n "\${DISPLAY}" ] && [ -x "\$(command -v code > /dev/null 2>&1)" ]; then
+elif [ -n "\${DISPLAY/:/}" ] && [ -x "\$(command -v code > /dev/null 2>&1)" ]; then
     export EDITOR=/usr/bin/code
 elif [ -x "\$(command -v nano > /dev/null 2>&1)" ]; then 
     export EDITOR=/usr/bin/nano;
 fi
 
-### See: 
-## https://wiki.gentoo.org/wiki/Ebuild
-## https://wiki.gentoo.org/wiki/EAPI
-## https://wiki.gentoo.org/wiki/Basic_guide_to_write_Gentoo_Ebuilds
-### for more information.
-## Example formatting: cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/example_repository/{CATEGORY}/{PN}
-alias ebuildSkel="mkdir -p /var/db/repos/temp-overlay/temp-category/; cp /var/db/repos/gentoo/skel.ebuild /var/db/repos/temp-overlay/temp-category/skel.ebuild; cd /var/db/repos/temp-overlay/temp-category/; xdg-open /var/db/repos/gentoo/skel.ebuild"
+## Fix Java 8's lack of HiDPI nonsense
+if [ "\${XDG_CURRENT_DESKTOP}" == "KDE" ]; then
+    export _JAVA_AWT_WM_NONREPARENTING=1;
+else
+    export _JAVA_AWT_WM_NONREPARENTING=0
+fi
 
+## Enable OpenGL over Vulkan via Zink if using the Nvidia proprietary / "Open-GPU" kernel modules for better OpenGL compatibility, potentially at the cost of speed depending on the application
+## (in which case, this should be reported)
+if [ -f /usr/lib/libGLX_mesa.so ] && [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
+    export __GLX_VENDOR_LIBRARY_NAME=mesa
+    export MESA_LOADER_DRIVER_OVERRIDE=zink
+    export GALLIUM_DRIVER=zink
+    ## For some reason I don't understand, this doesn't work     
+#     if [ -d "\$(find /home -type d -iname 'plasma-workspace')" ] && [ ! -f "\$(find /home -type f -iname 'nvidia-zink.sh')"  ]; then
+#         find /home -type d -iname "plasma-workspace" -exec sh -c 'cat << EOF > \$1/env/nvidia-zink.sh
+# #! /usr/bin/bash
+# 
+# if [ -f /usr/lib/libGLX_mesa.so ] && [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
+#     export __GLX_VENDOR_LIBRARY_NAME="mesa"
+#     export MESA_LOADER_DRIVER_OVERRIDE="zink"
+#     export GALLIUM_DRIVER="zink"
+# fi
+# EOF
+# ' ";"
+#         find /home -type f -iname "nvidia-zink.sh" -exec chmod +x ";"
+#     fi
+fi
 
-## Handles Wayland environment variables
+EOF
+  chmod 755 /etc/env.d/user-configs.sh
+  chmod +x /etc/env.d/user-configs.sh
+  
+  message "Adding a user configuration script to /etc/env.d/wayland.sh"
+  cat << EOF > /etc/env.d/wayland.sh
+#! /usr/bin/bash
+
 if [ -x "\$(command -v kwin_x11 > /dev/null 2>&1)" ]; then
-    if "\${XDG_SESSION_TYPE}" = "wayland"; then
-    
-      ## egl for older Nvidia versions
-      if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
-          if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version *: //' -lt "495.44"; then
-              export KWIN_OPENGL_INTERFACE="egl"
-              export QT_QPA_PLATFORM="wayland-egl;xcb"
-              export KWIN_DRM_USE_EGL_STREAMS=1
-          fi
-      else
-          ## for newer Nvidia versions and non-Nvidia
-          export QT_QPA_PLATFORM="wayland;xcb"
-      fi
-      
-      export CLUTTER_BACKEND=wayland
-      export SDL_VIDEODRIVER=wayland
+    if [ "\${XDG_SESSION_TYPE}" == "wayland" ]; then
+
+        ## egl for older Nvidia versions
+        if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
+            if nvidia-smi -q | grep "Driver Version" | sed 's/Driver Version *: //' -lt "495.44"; then
+                export KWIN_OPENGL_INTERFACE="egl"
+                export QT_QPA_PLATFORM="wayland-egl;xcb"
+                export KWIN_DRM_USE_EGL_STREAMS=1
+            fi
+        else
+            export QT_QPA_PLATFORM="wayland;xcb"
+        fi
+
+        ## Doesn't work for me, for some reason
+        # if [ modinfo /usr/lib/modules/\$(uname -r)/kernel/drivers/video/nvidia.ko | grep ^version | awk '{print \$3}' => 495.44 ]; then
+        #
+        ## GBM for newer Nvidia versions
+        # export QT_QPA_PLATFORM="wayland"
+        # export QT_QPA_PLATFORMTHEME=qt5ct
+        #    
+        # fi
+        
+        export CLUTTER_BACKEND=wayland
+        export SDL_VIDEODRIVER=wayland
         
     elif [ "\${XDG_SESSION_TYPE}" == "x11" ]; then
-        
-        ## Setting these for reference in case someone needs to know the relevant values for these GUIs for use with Xwayland
         export QT_QPA_PLATFORM="xcb"
         export SDL_VIDEODRIVER=x11
         export GDK_BACKEND=x11
         export WINIT_UNIX_BACKEND=x11
         
+        if [ -x "\$(command -v nvidia-smi > /dev/null 2>&1)" ]; then
+                export KWIN_TRIPLE_BUFFER=1
+        fi
     fi
-fi
 
-## Ask Kwin window manager to use tripple-buffer Vsync - currently disabled by default for "kwinft" ("kwin fast forward", a kwin fork)
-if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ] && test -x "\$(command -v kwin_x11 > /dev/null 2&>1)" && "\${XDG_SESSION_TYPE}" = "x11" && "\${QT_QPA_PLATFORM}" = "xcb"; then
-    export KWIN_TRIPLE_BUFFER=1
 fi
 
 ## Kwin compositing render setting
@@ -1462,23 +1519,14 @@ if [ "\${XDG_SESSION_TYPE}" == "x11" ]; then
     export KWIN_COMPOSE=O2
 elif [ "\${XDG_SESSION_TYPE}" == "wayland" ]; then
     export KWIN_COMPOSE=QPainter
-fi
-
-## Fix Java 8's lack of HiDPI nonsense; not guaranteed
-if [ "\${XDG_CURRENT_DESKTOP}" == "KDE" ]; then
-    export _JAVA_AWT_WM_NONREPARENTING=1;
-else
-    export _JAVA_AWT_WM_NONREPARENTING=0
-fi
-
-## See https://wiki.archlinux.org/title/Talk:Steam/Troubleshooting#Games_refuse_to_load/load_to_a_black_screen for reference
-#if [ -f '/usr/share/vulkan/icd.d/nvidia_icd.json' ]; then
-#    export VK_ICD_FILENAMES='/usr/share/vulkan/icd.d/nvidia_icd.json'
-#fi
+    if [ "\${KWIN_TRIPLE_BUFFER}" -eq 1 ]; then
+        export KWIN_TRIPLE_BUFFER=0
+    fi
+fi  
 
 EOF
-  chmod 755 /etc/env.d/user-configs.sh
-  chmod +x /etc/env.d/user-configs.sh
+  chmod 755 /etc/env.d/wayland.sh
+  chmod +x /etc/env.d/wayland.sh
   
   case ${GENTOO_DESKTOP} in
   
