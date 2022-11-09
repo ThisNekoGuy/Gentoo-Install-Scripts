@@ -1089,11 +1089,13 @@ EOF
   message "Installing Clang compiler and LLVM; this will take **a while**, go do something"
   command emerge sys-devel/clang ## Built with GCC compiled llvm (thus not self-hosted)
   command emerge sys-devel/llvm ## Built with GCC compiled llvm (thus not self-hosted)
+  command emerge sys-libs/libcxx ## ## Built with GCC compiled llvm (thus not self-hosted)
   message "Configuring /etc/portage/package.env"
   cat << EOF > /etc/portage/package.env
 sys-devel/clang compiler-clang-static-lto
 sys-devel/llvm compiler-clang-static-lto
 sys-devel/lld compiler-clang-static-lto
+sys-libs/libcxxabi compiler-clang-static-lto
 sys-libs/libcxx compiler-clang-static-lto
 sys-devel/gcc compiler-gcc-static-lto
 app-emulation/wine-vanilla compiler-gcc-wine
@@ -1105,6 +1107,9 @@ EOF
  chmod 755 /etc/portage/package.env
 
   message "Rebuilding Clang compiler LLVM using themselves; this will take **a while**, go do something"
+  emerge --update --deep --changed-use sys-libs/libcxx
+  ## Not sure if doing this separately is okay or not; I expect portage to see that it should also update due to the above depending on it
+  # emerge --update --deep --changed-use sys-libs/libcxxabi
   emerge --update --deep --changed-use sys-devel/clang
   emerge --update --deep --changed-use sys-devel/llvm
 
